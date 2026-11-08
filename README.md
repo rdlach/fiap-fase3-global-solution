@@ -28,8 +28,18 @@ Python, terminal, CSV, Git e GitHub. A aplicação usará a biblioteca padrão, 
 - `dados/`: arquivo CSV das ocorrências.
 - `entregas/`: relatório, apresentação e links finais.
 
+## Como executar
+
+Na pasta do projeto, execute:
+
+```bash
+python3 src/main.py
+```
+
+Use os números do menu e confirme os cadastros com `s`. O arquivo `dados/ocorrencias.csv` é criado no primeiro cadastro e as alterações são salvas a cada confirmação.
+
 ## Estado atual
 
-Estrutura inicial criada. A implementação ainda não começou.
+V1 funcional: cadastro em tom de conversa, consultas com filtros, atualização de status, resumo e ranking por bairro. Não exige instalação de pacotes externos.
 
 A proposta técnica está em [docs/especificacao.md](docs/especificacao.md). A aderência aos requisitos da FIAP deverá ser conferida com o enunciado oficial.
