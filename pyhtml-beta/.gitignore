@@ -1,0 +1,4 @@
+# Dados da Beta, independentes da aplicação principal.
+/dados/ocorrencias.csv
+/dados/dia_simulado.txt
+/dados/*.tmp
