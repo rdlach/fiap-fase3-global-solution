@@ -9,3 +9,8 @@ venv/
 .env.*
 !.env.example
 node_modules/
+
+# Dados locais gerados pelo uso; os exemplos fictícios são versionados.
+/dados/ocorrencias.csv
+/dados/dia_simulado.txt
+/dados/*.tmp

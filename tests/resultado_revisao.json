@@ -1,0 +1,32 @@
+{
+  "data": "2026-11-14",
+  "python": "3.14.7",
+  "comando": "python -m unittest discover -s tests -v",
+  "testes": 31,
+  "falhas": 0,
+  "erros": 0,
+  "dados_locais_preservados": true,
+  "estrutura_codigo": {
+    "localidades.py": {
+      "comprehensions": 0,
+      "geradores": 0,
+      "lambdas": 0
+    },
+    "main.py": {
+      "comprehensions": 0,
+      "geradores": 0,
+      "lambdas": 0
+    },
+    "prioridades.py": {
+      "comprehensions": 0,
+      "geradores": 0,
+      "lambdas": 0
+    },
+    "sistema.py": {
+      "comprehensions": 0,
+      "geradores": 0,
+      "lambdas": 0
+    }
+  },
+  "observacao": "Verificação em arquivos temporários; nenhum dado de uso foi alterado."
+}

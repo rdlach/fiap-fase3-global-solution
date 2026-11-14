@@ -1,44 +1,43 @@
-# FloodGuard — especificação inicial
+# Especificação do protótipo FloodGuard
 
-## Decisões confirmadas
+## Escopo e execução
 
-- Projeto da Global Solution da Fase 3.
-- Aplicação Python com interação exclusivamente pelo terminal.
-- Persistência em um arquivo CSV simples: `dados/ocorrencias.csv`.
-- Uso de dados simulados, sem serviços externos, sensores ou banco de dados.
+Interface pelo terminal, Python básico e biblioteca padrão. Recorte: oito distritos e 18 bairros de referência da região central de São Paulo. Executar `python src/sistema.py` ou `py src/sistema.py` no Windows.
 
-## Modelo proposto de ocorrência
+## Dados
 
-Cabeçalho do CSV: `id,bairro,categoria,descricao,urgencia,status`.
+CSV: `id,id_bairro,bairro,zona,distrito,categoria,tipo,descricao,urgencia,status,dia_abertura,solicitacoes`.
 
-- `id`: identificador único e estável, como FG-001.
-- `bairro`: nome obrigatório, sem espaços excedentes.
-- `categoria`: iluminação, acessibilidade, limpeza ou conservação.
-- `descricao`: texto obrigatório explicando o problema.
-- `urgencia`: baixa, média ou alta.
-- `status`: aberta, em análise ou concluída; começa como aberta.
+ID único `FG-001`; localização escolhida no catálogo; categoria entre as quatro obrigatórias; tipo compatível; descrição obrigatória, gerada nos presets ou preenchida em Outro; nível inicial Baixa, Média ou Alta; status Aberta, Em análise ou Concluída; abertura inteira positiva e não posterior ao dia atual; solicitações como inteiro positivo, inicialmente 1.
 
-Ler e escrever em UTF-8 pelo módulo `csv`, preservando acentos, vírgulas e aspas nos campos. Usar `newline=""` ao abrir o arquivo. Criar o CSV com cabeçalho quando ainda não existir; não sobrescrever um arquivo ilegível ou inválido silenciosamente. Salvar após cada alteração bem-sucedida e preservar os identificadores ao reiniciar.
+Os CSVs de seis, nove, dez e onze campos anteriores continuam aceitos. Preencher campos ausentes por regras documentadas: tipo Outro da categoria, localização por correspondência única, abertura dia 1 e contador 1. Preservar valores existentes. Não sobrescrever arquivo inválido ou regravar apenas por consultar. Salvar após confirmação usando arquivo temporário e substituição.
 
-## Menu proposto
+## Estruturas e funções
 
-1. Cadastrar ocorrência.
-2. Listar e filtrar ocorrências.
-3. Atualizar status.
-4. Exibir indicadores.
-5. Exibir ranking por bairro.
-0. Sair.
+Lista de dicionários para as ocorrências e os presets; dicionário de listas para os 24 tipos; dicionário para descrições e níveis iniciais. A fila de atendimento é uma lista derivada dos pendentes, ordenada por pontos, abertura e código. Ela representa prioridade, não FIFO; o requisito acadêmico de fila por ordem de registro ainda deve ser tratado separadamente.
 
-Entradas inválidas devem mostrar uma mensagem e permitir nova tentativa.
+O cálculo usa `pontos = base + dias + (solicitacoes - 1)`, com base 0, 3 ou 6 e sem teto. A prioridade pública segue 0–2 Baixa, 3–5 Média, 6–8 Alta e 9+ Crítico. Detalhes em `docs/prioridades.md`.
 
-## Indicadores e ranking propostos
+## Menus e navegação
 
-Exibir total de ocorrências e quantidade por status. O ranking contará ocorrências ainda não concluídas por bairro, em ordem decrescente de quantidade, com desempate pelo nome do bairro. O resultado descreve apenas os registros simulados cadastrados; não mede risco real de inundação.
+Menu principal: Comunidade, Equipe de acompanhamento ou encerrar. São perfis simulados, sem autenticação.
 
-## Estruturas de dados previstas
+Comunidade: cadastrar, consultar, reforçar ocorrência, resumo e pendências por bairro. Mostra prioridade simplificada, sem pontos, fórmula ou componentes internos.
 
-A proposta menciona listas, filas, pilhas, dicionários, matrizes e a hierarquia bairro → categoria → ocorrências. A aplicação concreta de cada estrutura deve ser definida após conferir o enunciado oficial, evitando presumir requisitos apenas a partir da proposta.
+Equipe: fila com pontuação, atualizar status, avançar dias simulados e resumo. Mostra pontos e componentes, com fila decrescente e desempate por abertura e ID. O dia atualizado é retornado ao menu principal para uso nas próximas consultas da comunidade.
 
-## Validação prevista
+Cadastro: distrito → bairro → categoria → tipo → descrição → revisão. Usar 0 para voltar, preservar preenchimento e permitir correções antes de salvar. A revisão oferece salvar, alterar campos, orientação geral ou cancelar. Mudar categoria exige tipo e descrição compatíveis.
 
-Verificar cadastro, filtros, atualização de status, ranking, entradas inválidas e persistência após reiniciar. Incluir descrições com acentos, vírgulas e aspas para validar a leitura e a gravação do CSV.
+Reforço: consultar pelo código, mostrar o problema e pedir confirmação explícita. Acrescentar uma solicitação ao mesmo registro. Não inferir vínculo por bairro ou tipo. Bloquear reforços em concluídas. Falha ou cancelamento não altera memória nem CSV.
+
+Consultas: todos os registros ou filtros por distrito, bairro, categoria e status. Voltar de um filtro retorna à escolha de consulta. Na atualização de status, voltar da confirmação retorna à escolha do status, e voltar do status retorna ao código.
+
+## Indicadores e limitações
+
+Resumo com total de ocorrências e quantidade por status; ranking de pendências por bairro. Os registros e atendimento são simulados. A base opcional `dados/ocorrencias_exemplo.csv` contém 12 registros fictícios; o histórico ainda precisa ser preparado. Indicadores adicionais, proporções, matriz e demais requisitos do enunciado continuam sujeitos ao mapa de pendências.
+
+## Validação
+
+Roteiro atual: `tests/cenarios_pontuacao.md`; resultados: `tests/resultado_revisao.json`. Conferir pontuação sem teto, faixas, exemplos aprovados, contagem explícita, ordenação entre críticos, reforços, cancelamento, gravação, datas, leitura dos formatos anteriores e separação das informações nos menus.
+
+Os CSVs aceitam UTF-8 com ou sem BOM. Os catálogos de bairros e distritos são conferidos em conjunto; repetições e cobertura incompleta são rejeitadas. O código dos testes reproduzíveis está em `tests/test_sistema.py`; executar `python -m unittest discover -s tests -v`. Resultado da revisão: 31 testes aprovados. Registros e relógio locais são ignorados pelo Git; os exemplos fictícios são versionados.
