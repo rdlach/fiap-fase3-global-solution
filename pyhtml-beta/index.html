@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FloodGuard — pyHTML Versão Beta</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <header>
+        <p class="versao">pyHTML · Versão Beta</p>
+        <h1>FloodGuard</h1>
+        <p>Demandas comunitárias da região central de São Paulo.</p>
+    </header>
+    <main>
+        <h2>Como você quer acessar?</h2>
+        <p>Escolha uma opção para acompanhar e organizar os problemas da comunidade.</p>
+        <div class="menu-inicial">
+            <section>
+                <h3>Comunidade</h3>
+                <p>Registre um problema, consulte o andamento ou reforce uma ocorrência.</p>
+                <form action="/comunidade" method="get">
+                    <button type="submit">Acessar comunidade</button>
+                </form>
+            </section>
+            <section>
+                <h3>Equipe de acompanhamento</h3>
+                <p>Consulte a fila por pontuação, atualize o status e avance os dias da simulação.</p>
+                <form action="/equipe" method="get">
+                    <button type="submit">Acessar equipe</button>
+                </form>
+            </section>
+        </div>
+        <details>
+            <summary>Como iniciar a aplicação?</summary>
+            <p>Na raiz do repositório, execute o comando abaixo. O navegador abrirá automaticamente.</p>
+            <pre>py pyhtml-beta/src/interface_html.py</pre>
+            <p>Mantenha o terminal aberto. Acesse http://127.0.0.1:8765 no navegador.</p>
+        </details>
+        <form action="/encerrar" method="get">
+            <button type="submit">Encerrar aplicação</button>
+        </form>
+    </main>
+    <footer><p>Protótipo acadêmico local · Perfis simulados, sem autenticação · Dados separados da aplicação principal.</p></footer>
+</body>
+</html>

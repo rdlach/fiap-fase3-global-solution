@@ -1,0 +1,48 @@
+/* Acabamento simples. As operações continuam no Python, sem JavaScript. */
+* { box-sizing: border-box; }
+body { margin: 0; background: #f2f5f8; color: #243448; font: 16px/1.6 Arial, sans-serif; }
+header { padding: 28px max(24px, calc((100% - 1100px) / 2)); color: white; background: #15364d; }
+header h1 { margin: 0; font-size: 32px; }
+header p { margin: 6px 0 0; }
+header .versao { display: inline-block; margin: 0 0 8px; padding: 3px 10px; border: 1px solid #7795ab; border-radius: 16px; font-size: 13px; }
+nav { display: flex; flex-wrap: wrap; gap: 8px; max-width: 1148px; margin: 20px auto; padding: 0 24px; }
+main { max-width: 1100px; margin: 24px auto; padding: 28px; border: 1px solid #dce3eb; border-radius: 12px; background: white; }
+h2 { margin-top: 0; color: #15364d; font-size: 24px; }
+h3 { color: #15364d; }
+button { min-height: 44px; margin: 4px 4px 4px 0; padding: 10px 18px; border: 1px solid #086f68; border-radius: 6px; color: white; background: #086f68; font: inherit; font-weight: bold; cursor: pointer; }
+button:hover { background: #05544f; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 3px solid #b85b00; outline-offset: 3px; }
+nav button, button[value="local"], button[value="categoria"], button[value="tipo"], button[value="descricao"], button[formnovalidate] { color: #15364d; background: #edf2f6; border-color: #c5d1dc; }
+nav button:hover { background: #dce6ee; }
+form { margin: 12px 0; }
+nav form { margin: 0; }
+label { font-weight: bold; }
+input:not([type="hidden"]), select, textarea { width: 100%; max-width: 560px; margin-top: 6px; padding: 10px 12px; border: 1px solid #93a5b6; border-radius: 6px; background: white; color: #243448; font: inherit; }
+textarea { resize: vertical; }
+.menu-opcoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.menu-opcoes form { margin: 0; }
+.menu-opcoes button { width: 100%; height: 100%; margin: 0; text-align: left; }
+.menu-inicial { display: flex; flex-wrap: wrap; gap: 18px; }
+.menu-inicial section { flex: 1 1 280px; padding: 22px; border: 1px solid #dce3eb; border-radius: 8px; background: #f7f9fb; }
+.menu-inicial section h3 { margin-top: 0; }
+.menu-inicial section p { min-height: 54px; }
+.tabela-rolavel { max-width: 100%; overflow-x: auto; }
+table { width: 100%; margin: 20px 0; border-collapse: collapse; font-size: 14px; }
+caption { text-align: left; padding: 10px 0; font-weight: bold; }
+th { color: #15364d; background: #e9f0f5; text-align: left; }
+th, td { padding: 12px; border-bottom: 1px solid #dce3eb; vertical-align: top; }
+tbody tr:nth-child(even) { background: #f7f9fb; }
+td form { margin: 0; }
+td button { font-size: 13px; white-space: nowrap; }
+[role="status"] { padding: 14px; border-left: 4px solid #086f68; background: #e8f5ef; }
+details { margin-top: 24px; padding: 16px; border: 1px solid #dce3eb; border-radius: 8px; }
+summary { cursor: pointer; font-weight: bold; }
+pre { padding: 12px; overflow-x: auto; background: #edf2f6; border-radius: 6px; }
+hr { border: 0; border-top: 1px solid #dce3eb; }
+footer { max-width: 1100px; margin: 20px auto; padding: 0 24px; font-size: 13px; }
+@media (max-width: 600px) {
+    main { margin: 12px; padding: 18px; }
+    nav { padding: 0 12px; }
+    nav button { font-size: 14px; }
+    header { padding: 24px; }
+}
