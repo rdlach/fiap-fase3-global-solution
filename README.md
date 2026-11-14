@@ -1,132 +1,81 @@
-# FloodGuard — Global Solution FIAP | Fase 3
+# FIAP - Faculdade de Informática e Administração Paulista
 
-Protótipo em Python para registrar e acompanhar demandas comunitárias na região central de São Paulo. Toda a interação acontece pelo terminal; os registros e o atendimento são simulados.
+<p align="center">
+<a href="https://www.fiap.com.br/">
+  <img src="../../../assets/logo-fiap.png" 
+       alt="FIAP - Faculdade de Informática e Administração Paulista" 
+       width="40%">
+</a>
+</p>
 
-## Escopo
+<br>
 
-- Oito distritos e 18 nomes de bairros de referência do Centro.
-- Cadastro com localização, categoria, tipo, descrição inicial e revisão antes de salvar.
-- Consulta por distrito, bairro, categoria ou status.
-- Solicitações adicionais vinculadas explicitamente a uma ocorrência existente.
-- Visão da comunidade com prioridade simplificada; painel da equipe com pontuação e fila ordenada.
-- Atualização de status, indicadores básicos e avanço de dias simulados.
-- Persistência local em CSV e TXT, sem serviços externos durante o uso.
+# Nome do projeto/atividade
 
-## Como executar
+## Nome do grupo
 
-Na pasta do projeto:
+## 👨‍🎓 Integrantes:
 
-```bash
-python src/sistema.py
-```
+* <a href="https://github.com/rdlach">Ronei Davi Lach</a>
+* <a href="https://github.com/Obleynixx">Gabriel Hampel Meireles</a>
+* <a href="https://github.com/jrzendron">José Roberto Zendron</a>
+* <a href="https://github.com/robertoiuvata">Roberto Kenji Iuvata</a>
+* <a href="https://github.com/David-Silva2004">David Silva</a>
 
-No Windows: `py src/sistema.py`. A entrada `src/main.py` continua funcionando. Usa somente biblioteca padrão, sem instalação de pacotes.
+## 👩‍🏫 Professores:
 
-Ao iniciar, escolher `1. Comunidade`, `2. Equipe de acompanhamento` ou `0. Encerrar`. Os perfis são simulados por menus, sem autenticação ou controle de acesso real.
+### Tutor(a)
 
-## Comunidade
+* <a href="https://br.linkedin.com/in/andretritiack">André Tritiack</a>
 
-1. Registrar um novo problema.
-2. Consultar ocorrências.
-3. Reforçar uma ocorrência existente.
-4. Ver resumo.
-5. Ver pendências por bairro.
-0. Voltar.
+### Coordenador(a)
 
-A comunidade vê problema, status e prioridade (Baixa, Média, Alta ou Crítico). Pontos, fórmula e ordenação interna ficam no painel da equipe.
+* <a href="https://www.linkedin.com/in/valtersrf/">Valter Santiago Rosa Filho</a>
 
-Ao reforçar, informar o código da ocorrência, conferir se é o mesmo problema e confirmar com `s`. Isso acrescenta uma solicitação ao mesmo registro, mantendo seu ID. Uma ocorrência diferente, mesmo no mesmo bairro e categoria, deve ser cadastrada separadamente. Ocorrências concluídas não recebem reforços.
+## 📜 Descrição
 
-## Equipe de acompanhamento
+*Descreva aqui seu projeto em detalhes de forma estruturada e organizada*
 
-1. Ver fila por pontuação.
-2. Atualizar status.
-3. Avançar dias da simulação.
-4. Ver resumo.
-0. Voltar.
+## 📁 Estrutura de pastas
 
-A fila apresenta primeiro a maior pontuação, inclusive entre ocorrências Críticas. Em empate, atende à abertura mais antiga e depois ao menor código numérico. Concluídas ficam fora da fila.
+*‼️ OBSERVAÇÃO DO TUTOR -- favor remover antes de subir o trabalho -- não há a obrigação de usar todas as pasta propostas, use apenas o que fizer SENTIDO para a entrega. Também está permitido criar mais pastas conforme necessidade visando a melhor organização do projeto. ‼️*
 
-A equipe vê a decomposição da pontuação em base, dias e solicitações adicionais. O dia simulado atualizado na equipe também passa a valer para as consultas da comunidade.
+Abaixo encontra-se a descrição da organização da raiz do projeto e a finalidade de cada diretório e arquivo:
 
-## Cadastro e navegação
+* **`data/`** Armazena todas as bases de dados utilizadas no projeto, incluindo arquivos estruturados (como CSV, Excel, JSON), bases de dados sintéticas e outros formatos brutos ou processados.
+* **`docs/`** Centraliza a documentação técnica e de negócio do projeto.
+* **`notebooks/`** Destinado a cadernos interativos (como *Jupyter Notebooks* ou *Google Colab*) utilizados para análise exploratória de dados, experimentação de algoritmos, prototipagem de modelos, etc.
+* **`src/`** Contém todo o código-fonte desenvolvido para o projeto. Dependendo do âmbito da atividade, pode incluir arquivos como: scripts (Python, R, JS), ficheiros web (HTML), firmware para hardware (ESP32/Arduino), além de APIs, microsserviços e ficheiros de modelos e inferências.
+* **`README.md`** Este ficheiro. Funciona como o guia principal de introdução, configuração e contextualização do projeto.
 
-Fluxo: distrito → bairro → categoria → tipo → descrição/complemento → revisão.
+## 📎 Links e Observações
 
-- `0` volta uma etapa. Na seleção inicial da localização, cancela o cadastro. No menu principal, encerra o programa.
-- A descrição inicial pode ser aceita com Enter; o complemento é opcional. Outro problema exige descrição.
-- Ao editar complemento, Enter mantém, um texto novo substitui o complemento anterior e `-` remove o complemento.
-- Na revisão: `1` salva, `2` altera bairro, `3` altera descrição, `4` altera categoria, `5` apresenta uma orientação geral sobre a prioridade, `6` cancela e `7` altera tipo.
-- Alterar categoria ou tipo exige conferir os campos dependentes. Desistir da edição preserva os valores anteriores.
-- Nenhum cadastro ou reforço é gravado antes da confirmação correspondente.
+### 🔗 Links do Projeto
 
-## Recorte central
+*Substitua ou duplique a estrutura abaixo para cada link relevante do projeto:*
 
-| Distrito | Bairros de referência no catálogo |
-| --- | --- |
-| Bela Vista | Bela Vista; Morro dos Ingleses |
-| Bom Retiro | Bom Retiro; Luz |
-| Cambuci | Cambuci; Vila Deodoro |
-| Consolação | Consolação; Higienópolis; Pacaembu; Vila Buarque |
-| Liberdade | Aclimação; Liberdade |
-| República | República; Santa Efigênia |
-| Santa Cecília | Barra Funda; Campos Elíseos; Santa Cecília |
-| Sé | Centro |
+* **\[Nome do Link (ex: Vídeo de Entrega no YouTube)]**(http://url-aqui) - Breve descrição.
 
-A opção `9. Buscar bairro pelo nome` encontra parte do nome, ignorando acentos e maiúsculas. O nome digitado não cria bairro: o usuário escolhe um preset por número. O recorte corresponde à região Centro da Seade; as associações bairro/distrito são referências da base de origem, documentadas em [docs/catalogo_sao_paulo.md](docs/catalogo_sao_paulo.md).
+### 🧠 Decisões Técnicas
 
-## Categorias e tipos
+*Utilize este espaço para registar as principais escolhas tecnológicas do projeto e as suas justificações (ex: escolha de frameworks, banco de dados, arquitetura, etc.):*
 
-| Categoria | Tipos predefinidos |
-| --- | --- |
-| Iluminação | Poste apagado; Luz piscando; Iluminação danificada; Poste danificado; Fiação elétrica exposta; Iluminação bloqueada por vegetação |
-| Acessibilidade | Rampa obstruída; Calçada sem passagem; Piso tátil danificado; Escadaria sem corrimão; Travessia sem acesso rebaixado; Banheiro público sem acessibilidade |
-| Limpeza | Lixo acumulado; Descarte de entulho; Bueiro com lixo; Esgoto a céu aberto; Animal morto em espaço público; Banheiro público sem limpeza |
-| Conservação | Buraco na rua; Banco danificado; Brinquedo de praça quebrado; Vazamento de água; Árvore caída em espaço público; Sinalização de trânsito danificada |
+> Escreva aqui as observações e justificações técnicas do projeto...
 
-São 24 tipos com descrição inicial e nível inicial. Cada categoria também tem Outro problema, na opção 7. Os presets ficam em um dicionário de listas, sem banco de dados ou framework.
+### 📢 Observações Gerais
 
-## Pontuação interna
+*Indique obrigatoriamente no campo abaixo a decisão da equipe quanto à participação na competição:*
 
-`pontos = base do tipo + dias desde abertura + solicitações adicionais vinculadas`.
+* **Participação na Competição:** \[ ] Sim, aceitamos participar / \[ ] Não vamos participar.
+* *Outras observações gerais (opcional):* Escreva aqui...
 
-| Base inicial | Pontos |
-| --- | --- |
-| Baixa | 0 |
-| Média | 3 |
-| Alta | 6 |
+## 🔧 Como executar o código
 
-Cada dia simulado e cada solicitação adicional somam um ponto. A primeira solicitação já está representada pelo cadastro e não conta como adicional. A pontuação não tem teto e os reforços confirmados não são subtraídos quando outros registros são concluídos.
+*Acrescentar as informações necessárias sobre pré-requisitos (IDEs, serviços, bibliotecas etc.) e instalação básica do projeto, descrevendo eventuais versões utilizadas. Colocar um passo a passo de como o leitor pode baixar o seu código e executá-lo a partir de sua máquina ou seu repositório.*
 
-| Pontos | Prioridade pública |
-| --- | --- |
-| 0 a 2 | Baixa |
-| 3 a 5 | Média |
-| 6 a 8 | Alta |
-| 9 ou mais | Crítico |
+\---
 
-Exemplo: base Baixa, três dias e quatro solicitações no total: `0 + 3 + (4 - 1) = 6`, prioridade Alta. Os detalhes e níveis iniciais dos tipos estão em [docs/prioridades.md](docs/prioridades.md).
+## 📋 Licença
 
-## Arquivos
+<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1"><p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/fiap-tutoria/FIAP-PORTFOLIO-AI">TEMPLATE - FIAP PORTFÓLIO AI</a> por <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://fiap.com.br">FIAP</a> está licenciado sobre <a href="http://creativecommons.org/licenses/by/4.0/?ref=chooser-v1" target="\_blank" rel="license noopener noreferrer" style="display:inline-block;">Attribution 4.0 International</a>.</p>
 
-- `src/`: funções, menus, catálogo de localidades e cálculo de prioridade.
-- `dados/bairros_sp.csv`: 18 presets do recorte central, com IDs estáveis.
-- `dados/distritos_sp.csv`: os oito distritos centrais e suas subprefeituras.
-- `dados/ocorrencias_exemplo.csv`: 12 registros fictícios versionados para demonstração.
-- `dados/ocorrencias.csv`: ocorrências de uso local; preservado no computador e ignorado pelo Git.
-- `dados/dia_simulado.txt`: dia atual; criado no primeiro avanço confirmado. Sem esse arquivo, a simulação começa no dia 1.
-- `docs/`: decisões, fontes, regras e registro de IA.
-- `tests/`: roteiros e resultados de verificações de cada etapa.
-- `entregas/`: arquivos finais da entrega acadêmica.
-
-Formatos anteriores do CSV continuam aceitos. Registros sem contador recebem uma solicitação inicial; registros sem abertura recebem dia 1 por convenção. A leitura preserva o arquivo; a próxima alteração confirmada grava o formato atual.
-
-## Estado e validação
-
-O roteiro atual está em [tests/cenarios_pontuacao.md](tests/cenarios_pontuacao.md). A revisão executou 31 testes reproduzíveis com arquivos temporários, sem falhas, registrados em [tests/resultado_revisao.json](tests/resultado_revisao.json). Para repetir: `python -m unittest discover -s tests -v`. A equipe deve reproduzir e revisar os resultados. O código dos testes está em [tests/test_sistema.py](tests/test_sistema.py).
-
-Os presets não criam relatos automaticamente. Uma base opcional com 12 ocorrências fictícias está disponível em `dados/ocorrencias_exemplo.csv`. O histórico de oito eventos e outros requisitos acadêmicos ainda precisam ser completados; a lista está em [docs/mudancas.md](docs/mudancas.md).
-
-O apoio de IA está registrado em [docs/uso_ia.md](docs/uso_ia.md). A especificação atual está em [docs/especificacao.md](docs/especificacao.md).
-
-A explicação das mudanças e da revisão está em [docs/mudancas.md](docs/mudancas.md). Para executar ou usar os exemplos em outra cópia limpa, seguir [docs/guia_execucao.md](docs/guia_execucao.md).
