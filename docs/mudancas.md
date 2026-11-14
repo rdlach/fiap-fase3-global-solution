@@ -17,7 +17,7 @@ A comunidade consulta uma prioridade compreensível. A equipe acompanha uma fila
 | Urgência | Escolhida no cadastro | Base predefinida por tipo e prioridade calculada |
 | Solicitações adicionais | Novos registros independentes | Reforço explícito por código, acumulado na mesma ocorrência |
 | Atendimento | Status e ranking por bairro | Painel da equipe com pontuação, parcelas do cálculo e fila ordenada |
-| Dados | CSV com seis campos | CSV com doze campos e leitura compatível com formatos anteriores |
+| Dados | CSV com seis campos | CSV com histórico e leitura compatível com formatos anteriores |
 | Execução | `python3 src/main.py` | `python src/sistema.py`, mantendo a entrada anterior |
 
 ## Organização do código
@@ -43,7 +43,7 @@ Exemplo: um relato inicialmente Baixa, com três dias e quatro solicitações vi
 
 O cadastro representa a primeira solicitação. A ação Reforçar exige código e confirmação do problema antes de acrescentar outra. O programa não assume que todo relato do mesmo bairro e tipo é o mesmo problema. O total é acumulado, sem subtração por encerramento de outras ocorrências.
 
-Concluídas saem da fila e não recebem reforços. Uma reabertura mantém a data inicial e o contador; não há histórico para separar períodos de encerramento. A passagem dos dias é simulada pela equipe, com confirmação e persistência em TXT.
+Concluídas saem da fila e não recebem reforços. Uma reabertura mantém a data inicial e o contador; as mudanças de status ficam no histórico. A equipe pode avançar o dia simulado. O valor confirmado fica em um TXT.
 
 ## CSVs e preservação dos dados
 
@@ -98,9 +98,9 @@ O resumo está em `tests/resultado_revisao.json`; o código reproduzível, em `t
 
 Esta revisão valida o comportamento implementado; não certifica o cumprimento integral da Global Solution.
 
-- A base de exemplo contém 12 registros e as quatro categorias, mas ainda falta implementar e demonstrar o histórico mínimo de oito eventos.
-- Ainda faltam pilha de eventos, fila FIFO por ordem de registro, matriz categoria × status e hierarquia bairro → categoria → ocorrências. A fila por pontuação não substitui a FIFO pedida no enunciado.
-- Completar indicadores por categoria, proporções, fórmulas e interpretação de uma base concreta.
+- A base de exemplo do terminal tem 12 ocorrências e 10 mudanças de status.
+- A equipe pode consultar a fila FIFO, a fila por pontuação, o histórico e a pilha de últimas atualizações.
+- O resumo tem matriz, percentuais e média de solicitações. A comunidade pode navegar pelo agrupamento por bairro e categoria.
 - Completar identificação da equipe e RMs, reflexão sobre acessibilidade e privacidade, conclusões, vídeo Não Listado e TXT final de links.
 - Conferir a tabela específica de arquivos da atividade no FIAP ON e a organização exigida pelo modelo oficial.
 - Os perfis são simulados por menus, sem autenticação. A aplicação deve ser usada por uma instância de cada vez; não há sincronização de gravações entre sessões.

@@ -24,4 +24,4 @@ Resultado: 31 testes aprovados, sem falhas nem erros. O CSV e o relógio existen
 
 Os testes foram conduzidos com apoio de IA e não representam validação já realizada por todos os integrantes. A equipe deve executar o roteiro manual, revisar o código, justificar os presets e a pontuação e registrar os responsáveis pela conferência antes da entrega acadêmica.
 
-O apoio de IA não substitui a compreensão da solução. As pendências do enunciado, incluindo histórico, FIFO, pilha, matriz, indicadores e itens finais da entrega, estão em `mudancas.md`.
+O apoio de IA não substitui a compreensão da solução. A IA apoiou a montagem do histórico, da fila FIFO, da pilha e dos indicadores, além da revisão dos fluxos da base de exemplo. O andamento da entrega está em `mudancas.md`.

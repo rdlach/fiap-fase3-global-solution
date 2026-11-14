@@ -296,6 +296,27 @@ class TestSistema(unittest.TestCase):
         self.assertEqual(registros[0]['status'], 'Concluída')
         self.assertEqual(sistema.carregar(self.bairros), registros)
 
+    def test_historico_persiste_e_pilha_mostra_o_mais_recente(self):
+        registros = [self.registro(), self.registro(2)]
+        self.interagir(sistema.atualizar, ['FG-002', '2', 's'], registros, 2)
+        self.interagir(sistema.atualizar, ['FG-001', '3', 's'], registros, 2)
+        self.interagir(sistema.atualizar, ['FG-001', '3', 's'], registros, 2)
+        self.interagir(sistema.atualizar, ['FG-002', '3', 'n'], registros, 2)
+        carregados = sistema.carregar(self.bairros, 2)
+        self.assertEqual(carregados, registros)
+        eventos = sistema.relatorios.eventos(carregados)
+        self.assertEqual([e['id'] for e in eventos], ['FG-002', 'FG-001'])
+        self.assertEqual(eventos[-1]['depois'], 'Concluída')
+        _, pilha = self.interagir(sistema.relatorios.mostrar_historico, [], carregados, True)
+        self.assertLess(pilha.index('FG-001'), pilha.index('FG-002'))
+
+    def test_fifo_independe_da_pontuacao_e_omite_concluidas(self):
+        registros = [self.registro(3, solicitacoes='40'), self.registro(1),
+                     self.registro(2, status='Concluída')]
+        codigos = []
+        sistema.relatorios.fila_fifo(registros, lambda item: codigos.append(item['id']))
+        self.assertEqual(codigos, ['FG-001', 'FG-003'])
+
     def test_dia_simulado_persiste_e_cancelamento_preserva(self):
         self.assertEqual(prioridades.carregar_dia(), 1)
         novo, _ = self.interagir(sistema.avancar_dia, ['3', 's'], 1)

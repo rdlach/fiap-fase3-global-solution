@@ -79,11 +79,11 @@ O tempo usa dias inteiros da simulação. No painel da equipe, “Avançar dias 
 
 O CSV guarda `urgencia` como nível inicial, `dia_abertura` e `solicitacoes` como total acumulado. A pontuação é derivada; não é regravada a cada consulta, evitando somar duas vezes o mesmo dia ou reforço.
 
-Registros antigos sem contador recebem 1. Sem abertura, recebem dia 1 por convenção. Os IDs, descrições e datas já existentes são preservados. Registros antigos independentes não são fundidos automaticamente. A leitura não modifica o arquivo; a próxima alteração confirmada grava os doze campos do formato atual.
+Registros antigos sem contador recebem 1. Sem abertura, recebem dia 1 por convenção. Os IDs, descrições e datas já existentes são preservados. Registros antigos independentes não são fundidos automaticamente. A leitura não modifica o arquivo; a próxima alteração confirmada grava o formato atual, incluindo a coluna de histórico.
 
 O dia atual fica em `dados/dia_simulado.txt`; sua ausência representa dia 1. Abertura futura ou inválida e contador zero, negativo ou não inteiro são rejeitados, preservando o CSV original.
 
-Ao concluir uma ocorrência, ela sai da fila. Se for reaberta, conserva abertura original e solicitações acumuladas. Não há cálculo de tempo separado por períodos de encerramento, pois o histórico ainda será implementado.
+Ao concluir uma ocorrência, ela sai da fila. Se for reaberta, conserva abertura original e solicitações acumuladas. O resumo usa a média de solicitações por ocorrência. O histórico guarda os dias das mudanças de status.
 
 ## Distinção dos presets e limites
 

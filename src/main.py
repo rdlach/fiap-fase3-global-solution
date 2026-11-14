@@ -1,5 +1,13 @@
 """FloodGuard: registro comunitário pelo terminal, com persistência CSV."""
 import csv
+import json
+from contextlib import contextmanager
+from tempfile import TemporaryDirectory
+import shutil
+import sys
+
+import prioridades
+import relatorios
 from pathlib import Path
 from localidades import buscar_bairros, carregar_bairros, escolher_bairro, escolher_distrito
 from prioridades import URGENCIAS_INICIAIS, calcular_prioridade, carregar_dia, salvar_dia
@@ -8,7 +16,8 @@ ARQUIVO = Path(__file__).resolve().parents[1] / 'dados' / 'ocorrencias.csv'
 CAMPOS_SEM_TIPO = ['id', 'id_bairro', 'bairro', 'zona', 'distrito', 'categoria', 'descricao', 'urgencia', 'status']
 CAMPOS_SEM_DIA = ['id', 'id_bairro', 'bairro', 'zona', 'distrito', 'categoria', 'tipo', 'descricao', 'urgencia', 'status']
 CAMPOS_SEM_SOLICITACOES = CAMPOS_SEM_DIA + ['dia_abertura']
-CAMPOS = CAMPOS_SEM_SOLICITACOES + ['solicitacoes']
+CAMPOS_SEM_HISTORICO = CAMPOS_SEM_SOLICITACOES + ['solicitacoes']
+CAMPOS = CAMPOS_SEM_HISTORICO + ['historico']
 CAMPOS_ANTIGOS = ['id', 'bairro', 'categoria', 'descricao', 'urgencia', 'status']
 CATEGORIAS = ['Iluminação', 'Acessibilidade', 'Limpeza', 'Conservação']
 TIPOS_PROBLEMA = {'Iluminação': ['Poste apagado',
@@ -75,10 +84,11 @@ def carregar(bairros, dia_atual=1):
     with ARQUIVO.open(encoding='utf-8-sig', newline='') as arquivo:
         leitor = csv.DictReader(arquivo, strict=True)
         campos_lidos = leitor.fieldnames
-        if campos_lidos not in [CAMPOS, CAMPOS_SEM_SOLICITACOES, CAMPOS_SEM_DIA, CAMPOS_SEM_TIPO, CAMPOS_ANTIGOS]:
+        if campos_lidos not in [CAMPOS, CAMPOS_SEM_HISTORICO, CAMPOS_SEM_SOLICITACOES, CAMPOS_SEM_DIA, CAMPOS_SEM_TIPO, CAMPOS_ANTIGOS]:
             raise ValueError('O cabeçalho do CSV não corresponde aos campos esperados.')
         registros = list(leitor)
     ids = []
+    ordens = set()
     bairros_por_id = {}
     for bairro in bairros:
         bairros_por_id[bairro['id']] = bairro
@@ -87,6 +97,8 @@ def carregar(bairros, dia_atual=1):
             raise ValueError('Há uma coluna excedente no CSV de ocorrências.')
         for campo in campos_lidos:
             valor = item.get(campo)
+            if campo == 'historico' and valor == '':
+                continue
             if valor is None or not valor.strip():
                 raise ValueError(f'O campo {campo} está ausente ou vazio em uma ocorrência.')
         codigo = item.get('id', '')
@@ -105,9 +117,9 @@ def carregar(bairros, dia_atual=1):
             item['tipo'] = TIPOS_PROBLEMA[item['categoria']][-1]
         if item['tipo'] not in TIPOS_PROBLEMA[item['categoria']]:
             raise ValueError(f'O tipo de problema de {codigo} não pertence à categoria informada.')
-        if campos_lidos not in [CAMPOS, CAMPOS_SEM_SOLICITACOES]:
+        if campos_lidos not in [CAMPOS, CAMPOS_SEM_HISTORICO, CAMPOS_SEM_SOLICITACOES]:
             item['dia_abertura'] = '1'
-        if campos_lidos != CAMPOS:
+        if campos_lidos not in (CAMPOS, CAMPOS_SEM_HISTORICO):
             item['solicitacoes'] = '1'
         quantidade = item['solicitacoes']
         if not quantidade.isdecimal() or int(quantidade) < 1:
@@ -131,7 +143,39 @@ def carregar(bairros, dia_atual=1):
             for campo in ['bairro', 'zona', 'distrito']:
                 if item[campo] != bairro[campo]:
                     raise ValueError(f'O campo {campo} de {codigo} não corresponde ao bairro selecionado.')
+        historico = ler_historico(item.pop('historico', ''), item, dia_atual, ordens)
+        if historico:
+            item['historico'] = historico
     return registros
+
+
+def ler_historico(valor, item, dia_atual, ordens):
+    if not valor:
+        return []
+    eventos = json.loads(valor)
+    if not isinstance(eventos, list):
+        raise ValueError('O histórico precisa ser uma lista de eventos.')
+    ordem_anterior = 0
+    dia_anterior = int(item['dia_abertura'])
+    status_anterior = None
+    for evento in eventos:
+        if not isinstance(evento, dict):
+            raise ValueError('Evento de histórico inválido.')
+        ordem = evento.get('ordem')
+        dia = evento.get('dia')
+        antes = evento.get('antes')
+        depois = evento.get('depois')
+        if (evento.get('id') != item['id'] or type(ordem) is not int
+                or ordem <= ordem_anterior or ordem in ordens or type(dia) is not int
+                or not dia_anterior <= dia <= dia_atual or antes not in STATUS
+                or depois not in STATUS or antes == depois
+                or (status_anterior is not None and antes != status_anterior)):
+            raise ValueError(f"Histórico inválido para {item['id']}.")
+        ordens.add(ordem)
+        ordem_anterior, dia_anterior, status_anterior = ordem, dia, depois
+    if eventos and status_anterior != item['status']:
+        raise ValueError(f"O histórico não corresponde ao status de {item['id']}.")
+    return eventos
 
 
 def salvar(registros):
@@ -140,7 +184,10 @@ def salvar(registros):
     with temporario.open('w', encoding='utf-8', newline='') as arquivo:
         escritor = csv.DictWriter(arquivo, fieldnames=CAMPOS)
         escritor.writeheader()
-        escritor.writerows(registros)
+        for item in registros:
+            linha = dict(item)
+            linha['historico'] = json.dumps(item.get('historico', []), ensure_ascii=False)
+            escritor.writerow(linha)
     temporario.replace(ARQUIVO)
 
 
@@ -279,7 +326,7 @@ def cadastrar(registros, bairros, dia_atual=1):
     while True:
         if etapa == 0:
             if bairro is not None:
-                print(f"\nBairro atual: {bairro['bairro']} — {bairro['distrito']} ({bairro['zona']})")
+                print(f"\nBairro atual: {bairro['bairro']} | {bairro['distrito']} ({bairro['zona']})")
             novo_bairro = escolher_bairro(bairros)
             if novo_bairro is None:
                 if revisando:
@@ -289,7 +336,7 @@ def cadastrar(registros, bairros, dia_atual=1):
                     return
             else:
                 bairro = novo_bairro
-                print(f"\nBairro selecionado: {bairro['bairro']} — {bairro['distrito']} ({bairro['zona']})")
+                print(f"\nBairro selecionado: {bairro['bairro']} | {bairro['distrito']} ({bairro['zona']})")
                 etapa_problema = 0
                 if revisando:
                     etapa = 2
@@ -431,7 +478,14 @@ def atualizar(registros, dia_atual=1):
             if resposta is None:
                 continue
             if resposta:
+                if status == item['status']:
+                    print('A ocorrência já está com esse status.')
+                    return
+                ordem = max((evento['ordem'] for evento in relatorios.eventos(registros)), default=0) + 1
+                evento = {'ordem': ordem, 'id': codigo, 'dia': dia_atual,
+                          'antes': item['status'], 'depois': status}
                 novos = copiar_registros(registros)
+                novos[indice_encontrado]['historico'] = [*item.get('historico', []), evento]
                 novos[indice_encontrado]['status'] = status
                 salvar(novos)
                 registros[:] = novos
@@ -442,14 +496,7 @@ def atualizar(registros, dia_atual=1):
 
 
 def resumo(registros):
-    print(f'\nHá {len(registros)} ocorrências cadastradas:')
-    for status in STATUS:
-        quantidade = 0
-        for item in registros:
-            if item['status'] == status:
-                quantidade += 1
-        print(f'{status}: {quantidade}')
-
+    relatorios.indicadores(registros, CATEGORIAS, STATUS)
 
 def chave_do_ranking(bairro):
     return (-bairro['quantidade'], bairro['nome'].casefold())
@@ -468,7 +515,7 @@ def ranking(registros):
         print(f"{bairro['nome']}: {bairro['quantidade']} ocorrência(s)")
     if not bairros:
         print('Não há pendências registradas por aqui.')
-    print('São apenas os registros desta simulação, não uma medida de risco de alagamento.')
+    print('O ranking conta as ocorrências pendentes de cada bairro.')
 
 
 def explicar_prioridade():
@@ -553,9 +600,10 @@ def reforcar(registros, dia_atual):
 
 def menu_comunidade(registros, bairros, dia_atual):
     while True:
-        opcao = escolher('Comunidade — o que deseja fazer?', [
+        opcao = escolher('Comunidade | o que deseja fazer?', [
             'Registrar um novo problema', 'Consultar ocorrências',
             'Reforçar uma ocorrência existente', 'Ver resumo', 'Ver pendências por bairro',
+            'Explorar por bairro e categoria',
         ])
         if opcao is None:
             return
@@ -568,8 +616,10 @@ def menu_comunidade(registros, bairros, dia_atual):
                 reforcar(registros, dia_atual)
             elif opcao == 'Ver resumo':
                 resumo(registros)
-            else:
+            elif opcao == 'Ver pendências por bairro':
                 ranking(registros)
+            else:
+                relatorios.mostrar_por_bairro(registros)
         except OSError as erro:
             print(f'Não foi possível salvar: {erro}. A alteração não foi aplicada.')
         input('\nPressione Enter para continuar...')
@@ -578,8 +628,9 @@ def menu_comunidade(registros, bairros, dia_atual):
 def menu_equipe(registros, dia_atual):
     while True:
         print(f'\nDia simulado atual: {dia_atual}')
-        opcao = escolher('Equipe — painel de acompanhamento', [
+        opcao = escolher('Equipe | painel de acompanhamento', [
             'Ver fila por pontuação', 'Atualizar status', 'Avançar dias da simulação', 'Ver resumo',
+            'Ver fila por ordem de registro', 'Ver últimas atualizações', 'Ver histórico de status',
         ])
         if opcao is None:
             return dia_atual
@@ -590,8 +641,12 @@ def menu_equipe(registros, dia_atual):
                 atualizar(registros, dia_atual)
             elif opcao == 'Avançar dias da simulação':
                 dia_atual = avancar_dia(dia_atual)
-            else:
+            elif opcao == 'Ver resumo':
                 resumo(registros)
+            elif opcao == 'Ver fila por ordem de registro':
+                relatorios.fila_fifo(registros, lambda item: mostrar(item, dia_atual, equipe=True))
+            else:
+                relatorios.mostrar_historico(registros, recentes=opcao == 'Ver últimas atualizações')
         except OSError as erro:
             print(f'Não foi possível salvar: {erro}. A alteração não foi aplicada.')
         input('\nPressione Enter para continuar...')
@@ -627,5 +682,30 @@ def main():
         print('\nAté mais! As alterações já confirmadas foram salvas.')
 
 
+@contextmanager
+def base_demo():
+    global ARQUIVO
+    original = ARQUIVO
+    dia_original = prioridades.ARQUIVO_DIA
+    with TemporaryDirectory(prefix='floodguard-demo-') as pasta:
+        ARQUIVO = Path(pasta) / 'ocorrencias.csv'
+        prioridades.ARQUIVO_DIA = Path(pasta) / 'dia_simulado.txt'
+        try:
+            shutil.copyfile(original.with_name('ocorrencias_exemplo.csv'), ARQUIVO)
+            print('Modo demonstração. As alterações desta sessão são temporárias.')
+            yield
+        finally:
+            ARQUIVO = original
+            prioridades.ARQUIVO_DIA = dia_original
+
+
+def executar():
+    if '--demo' in sys.argv[1:]:
+        with base_demo():
+            main()
+    else:
+        main()
+
+
 if __name__ == '__main__':
-    main()
+    executar()

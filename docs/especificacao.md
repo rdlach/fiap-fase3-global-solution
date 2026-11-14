@@ -14,7 +14,7 @@ Os CSVs de seis, nove, dez e onze campos anteriores continuam aceitos. Preencher
 
 ## Estruturas e funções
 
-Lista de dicionários para as ocorrências e os presets; dicionário de listas para os 24 tipos; dicionário para descrições e níveis iniciais. A fila de atendimento é uma lista derivada dos pendentes, ordenada por pontos, abertura e código. Ela representa prioridade, não FIFO; o requisito acadêmico de fila por ordem de registro ainda deve ser tratado separadamente.
+Lista de dicionários para as ocorrências e os presets; dicionário de listas para os 24 tipos; dicionário para descrições e níveis iniciais. A fila de atendimento é uma lista derivada dos pendentes, ordenada por pontos, abertura e código. O menu da equipe também tem uma fila FIFO que mostra os pendentes pelo código de registro.
 
 O cálculo usa `pontos = base + dias + (solicitacoes - 1)`, com base 0, 3 ou 6 e sem teto. A prioridade pública segue 0–2 Baixa, 3–5 Média, 6–8 Alta e 9+ Crítico. Detalhes em `docs/prioridades.md`.
 
@@ -34,7 +34,7 @@ Consultas: todos os registros ou filtros por distrito, bairro, categoria e statu
 
 ## Indicadores e limitações
 
-Resumo com total de ocorrências e quantidade por status; ranking de pendências por bairro. Os registros e atendimento são simulados. A base opcional `dados/ocorrencias_exemplo.csv` contém 12 registros fictícios; o histórico ainda precisa ser preparado. Indicadores adicionais, proporções, matriz e demais requisitos do enunciado continuam sujeitos ao mapa de pendências.
+O resumo mostra a matriz categoria × status, os totais, os percentuais e a média de solicitações por ocorrência. A consulta por bairro agrupa as ocorrências por categoria. A base de demonstração tem 12 ocorrências e 10 mudanças fictícias de status. No modo normal, cada mudança confirmada guarda o código, o dia, o status anterior e o novo status no mesmo CSV. O histórico mostra os eventos na ordem em que ocorreram. A pilha mostra o mais recente primeiro.
 
 ## Validação
 

@@ -1,18 +1,8 @@
-# FIAP - Faculdade de Informática e Administração Paulista
+# FloodGuard
 
-<p align="center">
-<a href="https://www.fiap.com.br/">
-  <img src="../../../assets/logo-fiap.png" 
-       alt="FIAP - Faculdade de Informática e Administração Paulista" 
-       width="40%">
-</a>
-</p>
+Global Solution da FIAP, Fase 3. Case Neighborhood Action Dashboard.
 
-<br>
-
-# Nome do projeto/atividade
-
-## Nome do grupo
+O FloodGuard ajuda a registrar e acompanhar problemas de iluminação, acessibilidade, limpeza e conservação na região central de São Paulo. A entrega principal roda no terminal com Python e guarda as ocorrências em CSV.
 
 ## 👨‍🎓 Integrantes:
 
@@ -32,50 +22,53 @@
 
 * <a href="https://www.linkedin.com/in/valtersrf/">Valter Santiago Rosa Filho</a>
 
-## 📜 Descrição
+## Como executar
 
-*Descreva aqui seu projeto em detalhes de forma estruturada e organizada*
+Use Python 3.10 ou mais recente. Na pasta do projeto, rode:
 
-## 📁 Estrutura de pastas
+```sh
+python3 src/sistema.py
+```
 
-*‼️ OBSERVAÇÃO DO TUTOR -- favor remover antes de subir o trabalho -- não há a obrigação de usar todas as pasta propostas, use apenas o que fizer SENTIDO para a entrega. Também está permitido criar mais pastas conforme necessidade visando a melhor organização do projeto. ‼️*
+Para começar com 12 ocorrências fictícias e 10 mudanças de status:
 
-Abaixo encontra-se a descrição da organização da raiz do projeto e a finalidade de cada diretório e arquivo:
+```sh
+python3 src/sistema.py --demo
+```
 
-* **`data/`** Armazena todas as bases de dados utilizadas no projeto, incluindo arquivos estruturados (como CSV, Excel, JSON), bases de dados sintéticas e outros formatos brutos ou processados.
-* **`docs/`** Centraliza a documentação técnica e de negócio do projeto.
-* **`notebooks/`** Destinado a cadernos interativos (como *Jupyter Notebooks* ou *Google Colab*) utilizados para análise exploratória de dados, experimentação de algoritmos, prototipagem de modelos, etc.
-* **`src/`** Contém todo o código-fonte desenvolvido para o projeto. Dependendo do âmbito da atividade, pode incluir arquivos como: scripts (Python, R, JS), ficheiros web (HTML), firmware para hardware (ESP32/Arduino), além de APIs, microsserviços e ficheiros de modelos e inferências.
-* **`README.md`** Este ficheiro. Funciona como o guia principal de introdução, configuração e contextualização do projeto.
+A demonstração usa uma base temporária. Pode cadastrar, testar uma mudança de status e avançar o dia sem mexer na base do uso normal. No modo normal, as ocorrências e o histórico ficam em `dados/ocorrencias.csv`. O dia simulado fica em `dados/dia_simulado.txt`.
 
-## 📎 Links e Observações
+## O que mostrar no terminal
 
-### 🔗 Links do Projeto
+- Em **Comunidade**, cadastre uma ocorrência, consulte pelo bairro e reforce um problema que já existe.
+- Em **Explorar por bairro e categoria**, veja os três níveis: bairro, categoria e ocorrência.
+- Em **Equipe**, compare a fila por ordem de registro com a fila por pontuação. A primeira mostra os pendentes mais antigos pelo código. A segunda atende primeiro os casos com mais pontos.
+- Atualize o status e confira o histórico. A pilha de últimas atualizações mostra primeiro o evento que acabou de entrar.
+- Em **Ver resumo**, confira a matriz com categorias nas linhas e status nas colunas. Veja também o percentual por categoria e por status e a média de solicitações por ocorrência.
 
-*Substitua ou duplique a estrutura abaixo para cada link relevante do projeto:*
+Cada percentual divide a quantidade daquele grupo pelo total de ocorrências. A média divide todas as solicitações, incluindo os reforços, pelo número de ocorrências. Na base de exemplo, quatro de 12 ocorrências estão em análise, o que representa 33,3%.
 
-* **\[Nome do Link (ex: Vídeo de Entrega no YouTube)]**(http://url-aqui) - Breve descrição.
+## Cuidados no uso
 
-### 🧠 Decisões Técnicas
+Use dados fictícios na apresentação. O cadastro precisa do bairro e da descrição do problema, sem nome, telefone ou documento. O menu funciona pelo teclado, informa as opções em texto e permite voltar antes de confirmar. O dia é simulado, e o ranking mostra a quantidade de pendências por bairro.
 
-*Utilize este espaço para registar as principais escolhas tecnológicas do projeto e as suas justificações (ex: escolha de frameworks, banco de dados, arquitetura, etc.):*
+## Arquivos do projeto
 
-> Escreva aqui as observações e justificações técnicas do projeto...
+- `src/`: aplicação de terminal e relatórios.
+- `dados/`: catálogos, base de exemplo e arquivos da execução.
+- `docs/`: regras, escolhas do projeto e registro de uso de IA.
+- `tests/`: testes da aplicação de terminal.
+- `pyhtml-beta/`: versão web em Python, disponível como demonstração extra.
 
-### 📢 Observações Gerais
+Para rodar os testes:
 
-*Indique obrigatoriamente no campo abaixo a decisão da equipe quanto à participação na competição:*
+```sh
+python3 -m unittest discover -s tests -v
+```
 
-* **Participação na Competição:** \[ ] Sim, aceitamos participar / \[ ] Não vamos participar.
-* *Outras observações gerais (opcional):* Escreva aqui...
-
-## 🔧 Como executar o código
-
-*Acrescentar as informações necessárias sobre pré-requisitos (IDEs, serviços, bibliotecas etc.) e instalação básica do projeto, descrevendo eventuais versões utilizadas. Colocar um passo a passo de como o leitor pode baixar o seu código e executá-lo a partir de sua máquina ou seu repositório.*
-
-\---
+[Abrir a demonstração web](https://d1o47fa2nugvwl.cloudfront.net/)
 
 ## 📋 Licença
 
-<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1"><p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/fiap-tutoria/FIAP-PORTFOLIO-AI">TEMPLATE - FIAP PORTFÓLIO AI</a> por <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://fiap.com.br">FIAP</a> está licenciado sobre <a href="http://creativecommons.org/licenses/by/4.0/?ref=chooser-v1" target="\_blank" rel="license noopener noreferrer" style="display:inline-block;">Attribution 4.0 International</a>.</p>
+<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1"><p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/fiap-tutoria/FIAP-PORTFOLIO-AI">TEMPLATE FIAP PORTFÓLIO AI</a> por <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://fiap.com.br">FIAP</a> está licenciado sobre <a href="http://creativecommons.org/licenses/by/4.0/?ref=chooser-v1" target="\_blank" rel="license noopener noreferrer" style="display:inline-block;">Attribution 4.0 International</a>.</p>
 
