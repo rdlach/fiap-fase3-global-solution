@@ -75,8 +75,9 @@ id,id_bairro,bairro,zona,distrito,categoria,tipo,descricao,urgencia,status,dia_a
 | `status` | Aberta, Em análise ou Concluída |
 | `dia_abertura` | Inteiro positivo, não posterior ao dia atual |
 | `solicitacoes` | Total inteiro positivo, incluindo a primeira solicitação |
+| `historico` | Lista JSON com a ordem, o código, o dia e os dois status de cada mudança |
 
-Formatos anteriores de seis, nove, dez e onze campos continuam aceitos. Dados sem abertura recebem dia 1 por convenção; sem contador, recebem 1. Descrições e IDs são preservados. A leitura não regrava o arquivo: a próxima alteração confirmada usa o formato atual.
+Formatos anteriores de seis, nove, dez, onze e doze campos continuam aceitos. Dados sem abertura recebem dia 1 por convenção; sem contador, recebem 1. Descrições e IDs são preservados. A leitura não regrava o arquivo: a próxima alteração confirmada usa o formato atual.
 
 Os dois catálogos são conferidos em conjunto. Cabeçalho, campos obrigatórios, repetições, recorte central e cobertura dos oito distritos são validados. As fontes e limitações geográficas estão em [catalogo_sao_paulo.md](catalogo_sao_paulo.md).
 
@@ -94,14 +95,14 @@ Foram conferidos os 18 bairros, os 24 tipos, codificação dos CSVs, migração,
 
 O resumo está em `tests/resultado_revisao.json`; o código reproduzível, em `tests/test_sistema.py`. Relatórios intermediários foram preservados fora do conjunto do commit, na pasta de análise do workspace, para evitar confusão com as regras atuais.
 
-## Limites e pendências da entrega acadêmica
+## Situação da entrega acadêmica
 
 Esta revisão valida o comportamento implementado; não certifica o cumprimento integral da Global Solution.
 
 - A base de exemplo do terminal tem 12 ocorrências e 10 mudanças de status.
 - A equipe pode consultar a fila FIFO, a fila por pontuação, o histórico e a pilha de últimas atualizações.
 - O resumo tem matriz, percentuais e média de solicitações. A comunidade pode navegar pelo agrupamento por bairro e categoria.
-- Completar identificação da equipe e RMs, reflexão sobre acessibilidade e privacidade, conclusões, vídeo Não Listado e TXT final de links.
+- Para a entrega final, preencher os RMs, confirmar a opção de competição, gravar o vídeo e montar o TXT com os links.
 - Conferir a tabela específica de arquivos da atividade no FIAP ON e a organização exigida pelo modelo oficial.
 - Os perfis são simulados por menus, sem autenticação. A aplicação deve ser usada por uma instância de cada vez; não há sincronização de gravações entre sessões.
 

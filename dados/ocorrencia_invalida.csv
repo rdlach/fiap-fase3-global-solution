@@ -1,0 +1,2 @@
+id,id_bairro,bairro,zona,distrito,categoria,tipo,descricao,urgencia,status,dia_abertura,solicitacoes,historico
+FG-001,B0001,Aclimação,Centro,Liberdade,Iluminação,Poste apagado,,Média,Aberta,1,2,[]

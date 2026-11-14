@@ -4,12 +4,12 @@ from collections import deque
 
 def fila_fifo(registros, mostrar):
     fila = deque(sorted(
-        (item for item in registros if item['status'] != 'Concluída'),
+        (item for item in registros if item['status'] == 'Aberta'),
         key=lambda item: int(item['id'][3:]),
     ))
     print('\nFila por ordem de registro')
     if not fila:
-        print('Não há ocorrências pendentes.')
+        print('Não há ocorrências aguardando análise.')
     while fila:
         mostrar(fila.popleft())
 
@@ -55,7 +55,7 @@ def mostrar_por_bairro(registros):
                 print(f"    {item['id']} | {item['status']} | {item['tipo']}")
 
 
-def indicadores(registros, categorias, status):
+def indicadores(registros, categorias, status, dia_atual):
     matriz = [[0 for _ in status] for _ in categorias]
     for item in registros:
         matriz[categorias.index(item['categoria'])][status.index(item['status'])] += 1
@@ -76,3 +76,10 @@ def indicadores(registros, categorias, status):
         print(f'Média de solicitações por ocorrência: {pedidos / total:.1f}')
     else:
         print('Média de solicitações por ocorrência: sem dados.')
+
+
+    pendentes = [item for item in registros if item['status'] != 'Concluída']
+    print(f'Pendências: {len(pendentes)}')
+    if pendentes:
+        dias = sum(dia_atual - int(item['dia_abertura']) for item in pendentes)
+        print(f'Dia simulado: {dia_atual} | Tempo médio em aberto: {dias / len(pendentes):.1f} dia(s)')

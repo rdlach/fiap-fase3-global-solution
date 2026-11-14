@@ -14,7 +14,7 @@ A IA gerou 12 ocorrências fictícias para `dados/ocorrencias_exemplo.csv`, usan
 
 ## Como os resultados foram verificados
 
-A revisão final executou 31 testes com `unittest`, biblioteca padrão do Python. O arquivo `tests/test_sistema.py` permite reproduzi-los com `python -m unittest discover -s tests -v`.
+A revisão inicial executou 31 testes com `unittest`, biblioteca padrão do Python. O arquivo `tests/test_sistema.py` permite reproduzi-los com `python -m unittest discover -s tests -v`.
 
 Foram verificados catálogos, os 24 cadastros predefinidos, CSV com acentos, aspas e BOM, campos inválidos, formatos anteriores, retorno e cancelamento, falha de gravação, solicitações vinculadas, pontuação, ordem de atendimento, separação de informações entre os menus e fluxo real com gravação e reinício.
 

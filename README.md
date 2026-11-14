@@ -1,18 +1,18 @@
 # FloodGuard
 
-Global Solution da FIAP, Fase 3. Case Neighborhood Action Dashboard.
+Global Solution 2026.2 da FIAP, entrega na Fase 4. Case Neighborhood Action Dashboard.
 
 O FloodGuard ajuda a registrar e acompanhar problemas de iluminação, acessibilidade, limpeza e conservação na região central de São Paulo. A entrega principal roda no terminal com Python e guarda as ocorrências em CSV.
 
-## 👨‍🎓 Integrantes:
+## Integrantes do Grupo 9
 
-* <a href="https://github.com/rdlach">Ronei Davi Lach</a>
-* <a href="https://github.com/Obleynixx">Gabriel Hampel Meireles</a>
-* <a href="https://github.com/jrzendron">José Roberto Zendron</a>
-* <a href="https://github.com/robertoiuvata">Roberto Kenji Iuvata</a>
-* <a href="https://github.com/David-Silva2004">David Silva</a>
+* <a href="https://github.com/rdlach">Ronei Davi Lach</a> (RM575354)
+* <a href="https://github.com/Obleynixx">Gabriel Hampel Meireles</a> (RM574600)
+* <a href="https://github.com/jrzendron">José Roberto Zendron</a> (RM575414)
+* <a href="https://github.com/robertoiuvata">Roberto Kenji Iuvata</a> (RM574361)
+* <a href="https://github.com/David-Silva2004">David Silva</a> (RM575885)
 
-## 👩‍🏫 Professores:
+## Professores
 
 ### Tutor(a)
 
@@ -42,11 +42,39 @@ A demonstração usa uma base temporária. Pode cadastrar, testar uma mudança d
 
 - Em **Comunidade**, cadastre uma ocorrência, consulte pelo bairro e reforce um problema que já existe.
 - Em **Explorar por bairro e categoria**, veja os três níveis: bairro, categoria e ocorrência.
-- Em **Equipe**, compare a fila por ordem de registro com a fila por pontuação. A primeira mostra os pendentes mais antigos pelo código. A segunda atende primeiro os casos com mais pontos.
+- Em **Equipe**, compare a fila por ordem de registro com a fila por pontuação. A primeira mostra apenas as ocorrências abertas e ainda sem análise, em ordem de código. A segunda atende primeiro os casos com mais pontos.
 - Atualize o status e confira o histórico. A pilha de últimas atualizações mostra primeiro o evento que acabou de entrar.
 - Em **Ver resumo**, confira a matriz com categorias nas linhas e status nas colunas. Veja também o percentual por categoria e por status e a média de solicitações por ocorrência.
 
 Cada percentual divide a quantidade daquele grupo pelo total de ocorrências. A média divide todas as solicitações, incluindo os reforços, pelo número de ocorrências. Na base de exemplo, quatro de 12 ocorrências estão em análise, o que representa 33,3%.
+
+## Como os dados são organizados
+
+| Estrutura | Uso |
+| --- | --- |
+| Lista | Guarda as ocorrências e permite percorrer a base. |
+| Fila FIFO | Retira a ocorrência aberta mais antiga primeiro. Em análise e concluídas ficam fora dessa fila. |
+| Pilha | Mostra a última mudança de status antes das anteriores. |
+| Dicionário | Usa o código como chave na busca direta. Também agrupa bairro, categoria e ocorrências. |
+| Matriz | Cruza as quatro categorias com os três status. |
+
+Aberta significa que a demanda foi registrada e aguarda análise. Em análise significa que a equipe começou a avaliar o caso. Concluída significa que o acompanhamento simulado terminou.
+
+## Regras e exemplo
+
+O CSV exige código, localidade genérica, categoria, tipo, descrição, urgência, status, dia de abertura e total de solicitações. O cadastro gera o código e começa com status Aberta. O histórico pode ficar vazio até a primeira alteração.
+
+A consulta usa `campo is None or item[campo] == valor`. Sem filtro, mostra toda a base. Com filtro, só mostra os registros com o valor escolhido. Se nenhum corresponder, informa que a consulta ficou vazia. A validação usa `not valor.strip()` para recusar campos preenchidos apenas com espaços. Uma mudança de status só acrescenta um evento depois da confirmação e quando o novo status é diferente do atual.
+
+Na demo, cadastre um poste apagado em um bairro do catálogo. O registro recebe o código FG-013 e começa como Aberta. Escolha Por código e informe FG-013 para conferir o cadastro. Em Equipe, mude a situação para Em análise. O histórico passa a mostrar `Dia 1 | FG-013 | De Aberta para Em análise`.
+
+O arquivo `dados/ocorrencia_invalida.csv` tem uma descrição vazia. O teste `test_base_invalida_preservada` verifica que a leitura aponta esse campo e preserva o arquivo. A base válida da demo fica em outro CSV.
+
+## O que a base de exemplo mostra
+
+No início há 5 abertas, 4 em análise e 3 concluídas. Isso dá 9 pendências em 12 registros, ou 75%. As quatro categorias têm três registros cada porque a amostra foi montada para cobrir os quatro casos. A média é de 2,0 solicitações por ocorrência, contando os reforços. O tempo médio em aberto soma, para cada pendência, o dia atual menos o dia de abertura e divide pela quantidade de pendências. Todos começam no dia 1, então a média inicial é zero.
+
+A simulação ajuda a separar demandas novas das que já estão sendo avaliadas. Os números vêm de uma amostra fictícia e servem para explicar os indicadores. Durante o projeto, aprendemos que um mesmo conjunto de registros pode produzir visões diferentes: a fila ajuda a começar a análise, o histórico preserva as decisões e a matriz mostra como os casos se distribuem.
 
 ## Cuidados no uso
 

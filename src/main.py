@@ -420,7 +420,7 @@ def cadastrar(registros, bairros, dia_atual=1):
 
 def consultar(registros, bairros, dia_atual=1):
     while True:
-        filtro = escolher('Como você quer consultar?', ['Todos', 'Por distrito', 'Por bairro', 'Por categoria', 'Por status'])
+        filtro = escolher('Como você quer consultar?', ['Todos', 'Por distrito', 'Por bairro', 'Por categoria', 'Por status', 'Por código'])
         if filtro is None:
             return
         campo = None
@@ -441,6 +441,17 @@ def consultar(registros, bairros, dia_atual=1):
         elif filtro == 'Por status':
             campo = 'status'
             valor = escolher('Escolha o status:', STATUS)
+        elif filtro == 'Por código':
+            codigo = texto('Qual é o código da ocorrência? ')
+            if codigo is None:
+                continue
+            por_codigo = {item['id']: item for item in registros}
+            item = por_codigo.get(codigo.upper())
+            if item is None:
+                print('Não encontrei esse código.')
+            else:
+                mostrar(item, dia_atual)
+            return
         if campo is not None and valor is None:
             continue
         encontrados = []
@@ -495,8 +506,8 @@ def atualizar(registros, dia_atual=1):
             return
 
 
-def resumo(registros):
-    relatorios.indicadores(registros, CATEGORIAS, STATUS)
+def resumo(registros, dia_atual=1):
+    relatorios.indicadores(registros, CATEGORIAS, STATUS, dia_atual)
 
 def chave_do_ranking(bairro):
     return (-bairro['quantidade'], bairro['nome'].casefold())
@@ -615,7 +626,7 @@ def menu_comunidade(registros, bairros, dia_atual):
             elif opcao == 'Reforçar uma ocorrência existente':
                 reforcar(registros, dia_atual)
             elif opcao == 'Ver resumo':
-                resumo(registros)
+                resumo(registros, dia_atual)
             elif opcao == 'Ver pendências por bairro':
                 ranking(registros)
             else:
@@ -642,7 +653,7 @@ def menu_equipe(registros, dia_atual):
             elif opcao == 'Avançar dias da simulação':
                 dia_atual = avancar_dia(dia_atual)
             elif opcao == 'Ver resumo':
-                resumo(registros)
+                resumo(registros, dia_atual)
             elif opcao == 'Ver fila por ordem de registro':
                 relatorios.fila_fifo(registros, lambda item: mostrar(item, dia_atual, equipe=True))
             else:

@@ -296,6 +296,21 @@ class TestSistema(unittest.TestCase):
         self.assertEqual(registros[0]['status'], 'Concluída')
         self.assertEqual(sistema.carregar(self.bairros), registros)
 
+    def test_base_invalida_preservada(self):
+        shutil.copy2(RAIZ / 'dados' / 'ocorrencia_invalida.csv', self.csv)
+        original = self.csv.read_bytes()
+        with self.assertRaisesRegex(ValueError, 'descricao'):
+            sistema.carregar(self.bairros)
+        self.assertEqual(self.csv.read_bytes(), original)
+
+    def test_consulta_por_codigo(self):
+        registros = [self.registro(), self.registro(2)]
+        _, saida = self.interagir(sistema.consultar, ['6', 'fg-002'], registros, self.bairros, 1)
+        self.assertIn('FG-002', saida)
+        self.assertNotIn('FG-001', saida)
+        _, saida = self.interagir(sistema.consultar, ['6', 'FG-099'], registros, self.bairros, 1)
+        self.assertIn('Não encontrei esse código.', saida)
+
     def test_historico_persiste_e_pilha_mostra_o_mais_recente(self):
         registros = [self.registro(), self.registro(2)]
         self.interagir(sistema.atualizar, ['FG-002', '2', 's'], registros, 2)
@@ -312,7 +327,7 @@ class TestSistema(unittest.TestCase):
 
     def test_fifo_independe_da_pontuacao_e_omite_concluidas(self):
         registros = [self.registro(3, solicitacoes='40'), self.registro(1),
-                     self.registro(2, status='Concluída')]
+                     self.registro(2, status='Concluída'), self.registro(4, status='Em análise')]
         codigos = []
         sistema.relatorios.fila_fifo(registros, lambda item: codigos.append(item['id']))
         self.assertEqual(codigos, ['FG-001', 'FG-003'])
