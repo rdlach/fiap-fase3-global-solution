@@ -51,3 +51,42 @@ respectivo navegador. Os perfis comunidade e equipe continuam simulados, com
 acesso público enquanto a lista de IPs estiver vazia. Use dados fictícios.
 
 Para voltar à demo estática, planeje e aplique com `-var=jose_ativo=false`.
+
+## Código da equipe
+
+No site publicado a área da equipe pede um código. O Terraform gera o valor e a Lambda só sobe se ele existir. Para ler:
+
+```sh
+terraform output -raw codigo_equipe
+```
+
+A sessão da equipe dura 2 horas. Não coloque o código em arquivos do repositório.
+
+## Custo e proteção
+
+- O CloudFront deve ficar no plano Free, em Manage plan no console. Ele inclui o WAF, não cobra excedente e só reduz a velocidade do site se o tráfego passar muito da franquia. Para cancelar o plano ou destruir a distribuição, cancele o plano antes no console.
+- O plano Free só aceita limite por IP no WAF. Regras com byte match ou filtro por cabeçalho exigem plano pago.
+- A Lambda roda no máximo 5 execuções ao mesmo tempo e a API aceita 5 requisições por segundo.
+- O CSS e a página de ajuda ficam 5 minutos em cache no CloudFront.
+- O bucket de estado descarta versões antigas depois de um dia.
+
+## Alertas de custo
+
+Crie o arquivo `alertas.auto.tfvars`, que o Git ignora, com o seu e-mail:
+
+```sh
+email_alerta = "voce@exemplo.com"
+```
+
+Com ele o Terraform cria um orçamento mensal de 3 dólares só para CloudFront, Lambda, API Gateway e WAF, com aviso em 50% e 100% do gasto real e em 100% da previsão. Cria também a detecção de anomalia, que manda um resumo diário quando algum serviço gasta 2 dólares a mais que o normal. A AWS pode pedir a confirmação da inscrição por e-mail.
+
+## Parar tudo em caso de emergência
+
+Este comando zera a Lambda e o site dinâmico para na hora. Para religar, troque o 0 por 5.
+
+```sh
+aws lambda put-function-concurrency --region us-east-1 \
+  --function-name NOME_DA_FUNCAO --reserved-concurrent-executions 0
+```
+
+O nome da função aparece com `terraform state show aws_lambda_function.jose`.
