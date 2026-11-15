@@ -1,0 +1,96 @@
+:root {
+  color-scheme: light;
+  --fundo: #edf3ef;
+  --texto: #152d28;
+  --suave: #4c645d;
+  --borda: #d4e0d9;
+  --verde: #16483d;
+  --lima: #d7f796;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--fundo); color: var(--texto); font: 1rem/1.5 Geist, system-ui, sans-serif; }
+h1, h2, h3, p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button, select { cursor: pointer; }
+button, input, select, textarea { min-height: 2.65rem; border: 1px solid var(--borda); border-radius: .6rem; padding: .55rem .8rem; background: white; }
+button { font-weight: 650; }
+button:hover { border-color: #638e7d; }
+:focus-visible { outline: 3px solid #327c63; outline-offset: 3px; }
+.limite { max-width: 78rem; margin-inline: auto; padding-inline: clamp(1rem, 4vw, 2.5rem); }
+.topo { background: #fff; border-bottom: 1px solid var(--borda); }
+.barra { min-height: 4.5rem; display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.marca { color: var(--texto); text-decoration: none; font-weight: 850; font-size: 1.35rem; letter-spacing: -.06em; }
+.marca span { color: #268261; }
+nav { display: flex; gap: .25rem; border-radius: .8rem; padding: .25rem; background: var(--fundo); }
+nav button { border-color: transparent; background: transparent; padding-inline: .65rem; }
+nav button[aria-pressed="true"] { background: var(--verde); color: #fff; }
+.hero { margin-top: 1.5rem; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1.5rem; padding: clamp(1.3rem, 5vw, 3rem); border-radius: 1.35rem; color: #fff; background: radial-gradient(ellipse at top right, #287c67, transparent 58%), #103c36; }
+.localidade { color: var(--lima); font-weight: 700; font-size: .78rem; letter-spacing: .13em; }
+h1 { font-size: clamp(2.1rem, 6vw, 4.6rem); letter-spacing: -.065em; line-height: 1.04; margin-block: .55rem .7rem; }
+.hero p:not(.localidade) { color: #e2f1ea; }
+.principal { color: white; background: var(--verde); border-color: transparent; }
+.hero .principal { background: var(--lima); color: #17392f; margin-top: 1.25rem; }
+.simulacao { border: 1px solid #ffffff50; background: #0b362e80; border-radius: 1rem; padding: 1rem; min-width: 9rem; }
+.simulacao strong { display: block; font-size: 2.4rem; line-height: 1.2; }
+.simulacao form { margin-top: .75rem; }
+.simulacao input { width: 4.5rem; color: var(--texto); }
+.simulacao button { color: var(--texto); }
+#mensagem { margin-top: .8rem; color: var(--verde); font-weight: 650; }
+#mensagem:empty, #mensagem-cadastro:empty { display: none; }
+.indicadores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; margin-block: 1rem; }
+.indicador, .painel { background: #fff; border: 1px solid var(--borda); border-radius: 1rem; padding: clamp(.8rem, 2vw, 1.25rem); }
+.indicador strong { display: block; font-size: clamp(1.5rem, 4vw, 2.2rem); line-height: 1.15; }
+.indicador span, .meta, .linha-lista, .ranking p, footer { color: var(--suave); font-size: .88rem; }
+.painel-duplo { display: grid; grid-template-columns: minmax(0, 2.5fr) minmax(14rem, 1fr); gap: 1rem; align-items: start; }
+h2 { font-size: 1.25rem; letter-spacing: -.025em; }
+.filtros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; margin-top: 1rem; }
+.busca { grid-column: 1 / -1; }
+label { display: block; font-size: .9rem; font-weight: 650; }
+label :is(input, select, textarea) { display: block; width: 100%; margin-top: .25rem; }
+.linha-lista, .cabecalho-card, .acoes, .dialogo-topo, .dialogo-acoes { display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
+.linha-lista { margin-top: .7rem; }
+.texto { background: transparent; border-color: transparent; color: var(--verde); }
+.registros, .ranking ol { list-style: none; padding: 0; margin: 0; }
+.ocorrencia { border: 1px solid var(--borda); border-radius: .75rem; padding: .9rem; margin-top: .55rem; overflow-wrap: anywhere; }
+.ocorrencia h3 { font-size: 1rem; }
+.ocorrencia p { margin-top: .3rem; }
+.etiqueta { flex: none; padding: .2rem .55rem; border-radius: 999px; font-size: .78rem; font-weight: 700; background: #e6f2e7; color: #24563f; }
+.em-analise { background: #fff0cf; color: #704a12; }
+.aberta { background: #e8edfc; color: #354779; }
+.ocorrencia .acoes { justify-content: flex-start; flex-wrap: wrap; margin-top: .75rem; }
+.acoes select { max-width: 100%; }
+.ranking p { margin-block: .4rem .75rem; }
+.ranking li + li { margin-top: .45rem; }
+.ranking button { width: 100%; display: flex; justify-content: space-between; gap: .5rem; text-align: left; background: #f5f8f5; }
+footer { padding-block: 1.25rem 2rem; }
+dialog { width: min(34rem, calc(100% - 1.5rem)); max-height: calc(100dvh - 2rem); border: 1px solid var(--borda); border-radius: 1rem; padding: 1.2rem; color: var(--texto); }
+dialog::backdrop { background: #0c2520a6; }
+.dialogo-topo { align-items: start; border-bottom: 1px solid var(--borda); padding-bottom: .65rem; }
+#progresso, #previa { color: var(--suave); font-size: .88rem; }
+dialog h3, dialog label, #previa, #mensagem-cadastro { margin-top: .7rem; }
+dialog dt { font-weight: 700; }
+dialog dd { margin: 0 0 .5rem; overflow-wrap: anywhere; }
+.dialogo-acoes { justify-content: flex-end; margin-top: 1rem; }
+@media (max-width: 48rem) {
+  .painel-duplo { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 32rem) {
+  .hero { grid-template-columns: minmax(0, 1fr); }
+  .simulacao { max-width: 14rem; }
+  .indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.ajuda { margin-top: 1rem; padding: clamp(.85rem, 2vw, 1.25rem); background: #fff7e5; border: 1px solid #e7c991; border-radius: 1rem; color: #553a14; }
+.ajuda p { margin-top: .3rem; font-size: .9rem; }
+.contatos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .65rem; margin-top: .8rem; }
+.contatos > div { min-width: 0; padding: .65rem; border: 1px solid #e7c991; border-radius: .6rem; background: #fffdf8; }
+.contatos a, .orientacao a { color: #683e09; text-underline-offset: .15em; }
+.contatos :is(a, span) { display: block; font-size: .82rem; overflow-wrap: anywhere; }
+.contatos .ligar { font-weight: 650; font-size: .94rem; margin-bottom: .35rem; }
+.contatos strong { font-size: 1.15rem; }
+.orientacao { margin-top: .75rem; padding: .65rem; background: #fff7e5; border-radius: .5rem; }
+.orientacao a { display: block; min-height: 2rem; }
+@media (max-width: 48rem) {
+  .contatos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
