@@ -22,6 +22,11 @@ Resultado: 31 testes aprovados, sem falhas nem erros. O CSV e o relógio existen
 
 ## Responsabilidade da equipe
 
-Os testes foram conduzidos com apoio de IA e não representam validação já realizada por todos os integrantes. A equipe deve executar o roteiro manual, revisar o código, justificar os presets e a pontuação e registrar os responsáveis pela conferência antes da entrega acadêmica.
+Os testes foram feitos com apoio de IA e não substituem a conferência do grupo. Quem conferiu:
+
+- Ronei: testou o programa na chamada de 14/11/2026.
+- Roberto: revisou o projeto e as correções do README em 15/11/2026.
+- José: aprovou o resultado em 15/11/2026.
+- David: conferiu o README e o código com o enunciado em 15/11/2026 e rodou os 39 testes, que passaram. Usou IA nessa parte.
 
 O apoio de IA não substitui a compreensão da solução. A IA apoiou a montagem do histórico, da fila FIFO, da pilha e dos indicadores, além da revisão dos fluxos da base de exemplo. O andamento da entrega está em `mudancas.md`.
