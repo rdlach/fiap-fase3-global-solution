@@ -3,31 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FloodGuard — pyHTML Versão Beta</title>
+    <title>FloodGuard | Cuide do seu bairro</title>
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <header>
-        <p class="versao">pyHTML · Versão Beta</p>
+    <header class="capa">
+        <p class="versao">SÃO PAULO / REGIÃO CENTRAL</p>
         <h1>FloodGuard</h1>
-        <p>Demandas comunitárias da região central de São Paulo.</p>
+        <p>Registre um problema no bairro e acompanhe o que precisa de atenção.</p>
+        <a class="atalho" href="/ajuda">Ajuda de emergência</a>
     </header>
-    <main>
-        <h2>Como você quer acessar?</h2>
-        <p>Escolha uma opção para acompanhar e organizar os problemas da comunidade.</p>
+    <main id="conteudo">
+        <h2>O que você quer fazer?</h2>
         <div class="menu-inicial">
-            <section>
+            <section class="porta">
                 <h3>Comunidade</h3>
                 <p>Registre um problema, consulte o andamento ou reforce uma ocorrência.</p>
                 <form action="/comunidade" method="get">
-                    <button type="submit">Acessar comunidade</button>
+                    <button type="submit">Abrir comunidade</button>
                 </form>
             </section>
-            <section>
+            <section class="porta">
                 <h3>Equipe de acompanhamento</h3>
                 <p>Consulte a fila por pontuação, atualize o status e avance os dias da simulação.</p>
                 <form action="/equipe" method="get">
-                    <button type="submit">Acessar equipe</button>
+                    <button type="submit">Abrir painel</button>
                 </form>
             </section>
         </div>

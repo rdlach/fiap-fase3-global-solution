@@ -169,12 +169,12 @@ class TestSistema(unittest.TestCase):
         shutil.copy2(RAIZ / 'dados' / 'ocorrencias_exemplo.csv', self.csv)
         registros = sistema.carregar(self.bairros, 1)
         self.assertEqual(len(registros), 12)
-        for categoria in sistema.CATEGORIAS:
-            self.assertTrue(any(item['categoria'] == categoria for item in registros))
+        self.assertEqual({item['categoria'] for item in registros},
+                         {'Iluminação', 'Acessibilidade', 'Limpeza', 'Conservação'})
         for status in sistema.STATUS:
             self.assertTrue(any(item['status'] == status for item in registros))
 
-    def test_todos_os_24_presets_cadastram_e_recarregam(self):
+    def test_todos_os_presets_cadastram_e_recarregam(self):
         for c, categoria in enumerate(sistema.CATEGORIAS, 1):
             for t, tipo in enumerate(sistema.TIPOS_PROBLEMA[categoria][:-1], 1):
                 with self.subTest(tipo=tipo):

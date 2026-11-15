@@ -1,5 +1,6 @@
 """FloodGuard: registro comunitário pelo terminal, com persistência CSV."""
 import csv
+import json
 from pathlib import Path
 from localidades import buscar_bairros, carregar_bairros, escolher_bairro, escolher_distrito
 from prioridades import URGENCIAS_INICIAIS, calcular_prioridade, carregar_dia, salvar_dia
@@ -8,9 +9,10 @@ ARQUIVO = Path(__file__).resolve().parents[1] / 'dados' / 'ocorrencias.csv'
 CAMPOS_SEM_TIPO = ['id', 'id_bairro', 'bairro', 'zona', 'distrito', 'categoria', 'descricao', 'urgencia', 'status']
 CAMPOS_SEM_DIA = ['id', 'id_bairro', 'bairro', 'zona', 'distrito', 'categoria', 'tipo', 'descricao', 'urgencia', 'status']
 CAMPOS_SEM_SOLICITACOES = CAMPOS_SEM_DIA + ['dia_abertura']
-CAMPOS = CAMPOS_SEM_SOLICITACOES + ['solicitacoes']
+CAMPOS_SEM_HISTORICO = CAMPOS_SEM_SOLICITACOES + ['solicitacoes']
+CAMPOS = CAMPOS_SEM_HISTORICO + ['historico']
 CAMPOS_ANTIGOS = ['id', 'bairro', 'categoria', 'descricao', 'urgencia', 'status']
-CATEGORIAS = ['Iluminação', 'Acessibilidade', 'Limpeza', 'Conservação']
+CATEGORIAS = ['Iluminação', 'Acessibilidade', 'Limpeza', 'Conservação', 'Inundação', 'Incêndio', 'Acidentes', 'Animais']
 TIPOS_PROBLEMA = {'Iluminação': ['Poste apagado',
                 'Luz piscando',
                 'Iluminação danificada',
@@ -65,6 +67,24 @@ DESCRICOES = {
     'Árvore caída em espaço público': 'Árvore caída em espaço público.',
     'Sinalização de trânsito danificada': 'Placa ou pintura de sinalização de trânsito danificada ou ilegível.',
 }
+TIPOS_PROBLEMA.update({
+    'Inundação': ['Rua alagada', 'Córrego transbordado', 'Imóvel inundado', 'Outro problema de inundação'],
+    'Incêndio': ['Incêndio em imóvel', 'Incêndio em vegetação', 'Incêndio em veículo', 'Outro caso de incêndio'],
+    'Acidentes': ['Colisão de veículos', 'Atropelamento', 'Queda em via pública', 'Outro acidente'],
+})
+TIPOS_PROBLEMA['Animais'] = ['Cães latindo sem parar', 'Animal atropelado',
+                             'Retirada de ninho ou animal silvestre', 'Outro problema com animais']
+DESCRICOES.update({
+    'Cães latindo sem parar': 'Cães latindo sem parar, incomodando a vizinhança.',
+    'Animal atropelado': 'Animal atropelado na via, ferido ou aguardando remoção.',
+    'Retirada de ninho ou animal silvestre': 'Ninho ou animal silvestre, como ave ou cobra, que precisa ser retirado.',
+})
+URGENCIAS_INICIAIS.update({'Cães latindo sem parar': 'Baixa', 'Animal atropelado': 'Alta',
+                           'Retirada de ninho ou animal silvestre': 'Média'})
+for categoria in ('Inundação', 'Incêndio', 'Acidentes'):
+    for tipo in TIPOS_PROBLEMA[categoria][:-1]:
+        DESCRICOES[tipo] = tipo + '.'
+        URGENCIAS_INICIAIS[tipo] = 'Alta'
 URGENCIAS = ['Baixa', 'Média', 'Alta']
 STATUS = ['Aberta', 'Em análise', 'Concluída']
 
@@ -77,10 +97,11 @@ def carregar(bairros, dia_atual=1, arquivo_csv=None):
     with arquivo_csv.open(encoding='utf-8-sig', newline='') as arquivo:
         leitor = csv.DictReader(arquivo, strict=True)
         campos_lidos = leitor.fieldnames
-        if campos_lidos not in [CAMPOS, CAMPOS_SEM_SOLICITACOES, CAMPOS_SEM_DIA, CAMPOS_SEM_TIPO, CAMPOS_ANTIGOS]:
+        if campos_lidos not in [CAMPOS, CAMPOS_SEM_HISTORICO, CAMPOS_SEM_SOLICITACOES, CAMPOS_SEM_DIA, CAMPOS_SEM_TIPO, CAMPOS_ANTIGOS]:
             raise ValueError('O cabeçalho do CSV não corresponde aos campos esperados.')
         registros = list(leitor)
     ids = []
+    ordens = set()
     bairros_por_id = {}
     for bairro in bairros:
         bairros_por_id[bairro['id']] = bairro
@@ -89,6 +110,8 @@ def carregar(bairros, dia_atual=1, arquivo_csv=None):
             raise ValueError('Há uma coluna excedente no CSV de ocorrências.')
         for campo in campos_lidos:
             valor = item.get(campo)
+            if campo == 'historico' and valor == '':
+                continue
             if valor is None or not valor.strip():
                 raise ValueError(f'O campo {campo} está ausente ou vazio em uma ocorrência.')
         codigo = item.get('id', '')
@@ -107,9 +130,9 @@ def carregar(bairros, dia_atual=1, arquivo_csv=None):
             item['tipo'] = TIPOS_PROBLEMA[item['categoria']][-1]
         if item['tipo'] not in TIPOS_PROBLEMA[item['categoria']]:
             raise ValueError(f'O tipo de problema de {codigo} não pertence à categoria informada.')
-        if campos_lidos not in [CAMPOS, CAMPOS_SEM_SOLICITACOES]:
+        if campos_lidos not in [CAMPOS, CAMPOS_SEM_HISTORICO, CAMPOS_SEM_SOLICITACOES]:
             item['dia_abertura'] = '1'
-        if campos_lidos != CAMPOS:
+        if campos_lidos not in (CAMPOS, CAMPOS_SEM_HISTORICO):
             item['solicitacoes'] = '1'
         quantidade = item['solicitacoes']
         if not quantidade.isdecimal() or int(quantidade) < 1:
@@ -133,7 +156,39 @@ def carregar(bairros, dia_atual=1, arquivo_csv=None):
             for campo in ['bairro', 'zona', 'distrito']:
                 if item[campo] != bairro[campo]:
                     raise ValueError(f'O campo {campo} de {codigo} não corresponde ao bairro selecionado.')
+        historico = ler_historico(item.pop('historico', ''), item, dia_atual, ordens)
+        if historico:
+            item['historico'] = historico
     return registros
+
+
+def ler_historico(valor, item, dia_atual, ordens):
+    if not valor:
+        return []
+    eventos = json.loads(valor)
+    if not isinstance(eventos, list):
+        raise ValueError('O histórico precisa ser uma lista de eventos.')
+    ordem_anterior = 0
+    dia_anterior = int(item['dia_abertura'])
+    status_anterior = None
+    for evento in eventos:
+        if not isinstance(evento, dict):
+            raise ValueError('Evento de histórico inválido.')
+        ordem = evento.get('ordem')
+        dia = evento.get('dia')
+        antes = evento.get('antes')
+        depois = evento.get('depois')
+        if (evento.get('id') != item['id'] or type(ordem) is not int
+                or ordem <= ordem_anterior or ordem in ordens or type(dia) is not int
+                or not dia_anterior <= dia <= dia_atual or antes not in STATUS
+                or depois not in STATUS or antes == depois
+                or (status_anterior is not None and antes != status_anterior)):
+            raise ValueError(f"Histórico inválido para {item['id']}.")
+        ordens.add(ordem)
+        ordem_anterior, dia_anterior, status_anterior = ordem, dia, depois
+    if eventos and status_anterior != item['status']:
+        raise ValueError(f"O histórico não corresponde ao status de {item['id']}.")
+    return eventos
 
 
 def salvar(registros):
@@ -142,7 +197,10 @@ def salvar(registros):
     with temporario.open('w', encoding='utf-8', newline='') as arquivo:
         escritor = csv.DictWriter(arquivo, fieldnames=CAMPOS)
         escritor.writeheader()
-        escritor.writerows(registros)
+        for item in registros:
+            linha = dict(item)
+            linha['historico'] = json.dumps(item.get('historico', []), ensure_ascii=False)
+            escritor.writerow(linha)
     temporario.replace(ARQUIVO)
 
 
@@ -204,11 +262,18 @@ def registrar_reforco(registros, codigo):
     return atualizado
 
 
-def registrar_status(registros, codigo, status):
+def registrar_status(registros, codigo, status, dia=1):
     if status not in STATUS:
         raise ValueError('Escolha um status válido.')
     novos = copiar_registros(registros)
     atualizado = encontrar_ocorrencia(novos, codigo)
+    if atualizado['status'] == status:
+        return atualizado
+    ordem = max((evento['ordem'] for item in registros
+                 for evento in item.get('historico', [])), default=0) + 1
+    evento = {'ordem': ordem, 'id': atualizado['id'], 'dia': dia,
+              'antes': atualizado['status'], 'depois': status}
+    atualizado['historico'] = [*atualizado.get('historico', []), evento]
     atualizado['status'] = status
     salvar(novos)
     registros[:] = novos
@@ -473,7 +538,7 @@ def atualizar(registros, dia_atual=1):
             if resposta is None:
                 continue
             if resposta:
-                registrar_status(registros, codigo, status)
+                registrar_status(registros, codigo, status, dia_atual)
                 print('Pronto. O atendimento foi atualizado.')
             else:
                 print('Atualização cancelada. O status foi mantido.')

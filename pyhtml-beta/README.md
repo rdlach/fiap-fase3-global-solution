@@ -1,10 +1,10 @@
 # FloodGuard — aplicação em pyHTML · Versão Beta
 
-Versão experimental local do FloodGuard com menus, formulários e botões no navegador. O Python executa as operações e grava os arquivos CSV. HTML estrutura as páginas e um CSS pequeno cuida da aparência. Não usa JavaScript, frameworks, APIs ou serviços externos.
+Versão experimental local do FloodGuard com menus, formulários e botões no navegador. O Python executa as operações e grava os arquivos CSV. HTML estrutura as páginas e um CSS pequeno cuida da aparência. A interface usa HTML e CSS, e o servidor local usa a biblioteca padrão do Python.
 
 ## Separação da versão principal
 
-- Publicada exclusivamente na branch `pyhtml-beta`, sem merge na `main`.
+- Disponível na pasta `pyhtml-beta` da branch principal.
 - Todos os arquivos desta experiência ficam em `pyhtml-beta/`.
 - O código, os testes e os dados da aplicação de terminal na raiz do repositório permanecem iguais.
 - A Beta contém uma cópia independente do código Python e dos catálogos do projeto, baseada na revisão `488762f`. Melhorias futuras do terminal não se propagam automaticamente para essa cópia.
@@ -40,7 +40,7 @@ Inicie pelo Python. Abrir `index.html` diretamente como arquivo não inicia as o
 
 Na primeira execução, a base começa vazia. O botão **Carregar 12 exemplos fictícios** permite iniciar a demonstração. Essa operação exige confirmação e só funciona se a base estiver vazia.
 
-Os presets mantêm os 8 distritos, os 18 bairros de referência da região central e as 4 categorias do projeto. A pontuação segue a regra existente: base **0/3/6 + dias decorridos + solicitações adicionais**. A partir de 9 pontos, a prioridade é Crítico; os pontos continuam aumentando. Apenas o menu da equipe exibe a pontuação numérica.
+A web usa o catálogo de 8 distritos e 18 bairros. Além das quatro categorias da entrega de terminal, oferece Inundação, Incêndio, Acidentes e Animais, com cães latindo sem parar, animal atropelado e retirada de ninho ou animal silvestre. O painel tem FIFO, histórico de status, últimas atualizações, agrupamento por bairro e indicadores. O menu de ajuda reúne telefones e canais oficiais. A pontuação segue a regra existente: base **0/3/6 + dias decorridos + solicitações adicionais**. A partir de 9 pontos, a prioridade é Crítico; os pontos continuam aumentando. Apenas o menu da equipe exibe a pontuação numérica.
 
 ## Arquivos
 
@@ -83,6 +83,6 @@ Os testes usam CSVs e relógios temporários. Cobrem as regras existentes e os f
 
 ## Limites da Beta
 
-Os perfis são simulados, sem login; qualquer pessoa usando a aplicação local pode entrar no menu da equipe. O servidor escuta apenas no computador local e deve ser usado em uma única instância. Não foi desenvolvido para publicação na internet nem para acesso simultâneo por vários usuários.
+Os perfis são simulados, sem login; qualquer pessoa usando a aplicação local pode entrar no menu da equipe. O servidor escuta apenas no computador local e deve ser usado em uma única instância. A demonstração publicada usa um adaptador AWS separado e uma base compartilhada no S3.
 
 O relógio é simulado, não acompanha automaticamente a data real. Não há envio a órgãos públicos. Use registros fictícios ou consentidos e evite dados pessoais na descrição. A parte HTTP é infraestrutura adicional da experiência; as regras do problema continuam em funções, listas e dicionários. A equipe precisa compreender e justificar essa extensão antes de incluí-la em uma entrega acadêmica.
