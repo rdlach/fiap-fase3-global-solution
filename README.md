@@ -4,6 +4,8 @@ Global Solution 2026.2 da FIAP, entrega na Fase 4. Case Neighborhood Action Dash
 
 O FloodGuard ajuda a registrar e acompanhar problemas de iluminação, acessibilidade, limpeza e conservação na região central de São Paulo. A entrega principal roda no terminal com Python e guarda as ocorrências em CSV.
 
+O público beneficiado é formado por moradores da região central de São Paulo, lideranças comunitárias e equipes responsáveis por acompanhar e priorizar as demandas locais.
+
 ## Integrantes do Grupo 9
 
 * <a href="https://github.com/rdlach">Ronei Davi Lach</a> (RM575354)
@@ -30,11 +32,19 @@ Use Python 3.10 ou mais recente. Na pasta do projeto, rode:
 python3 src/sistema.py
 ```
 
+O comando solicitado no enunciado também pode ser usado:
+
+```sh
+python src/sistema.py
+```
+
 Para começar com 12 ocorrências fictícias e 10 mudanças de status:
 
 ```sh
 python3 src/sistema.py --demo
 ```
+
+> **Demonstração recomendada:** `python src/sistema.py --demo`
 
 A demonstração usa uma base temporária. Pode cadastrar, testar uma mudança de status e avançar o dia sem mexer na base do uso normal. No modo normal, as ocorrências e o histórico ficam em `dados/ocorrencias.csv`. O dia simulado fica em `dados/dia_simulado.txt`.
 
@@ -80,7 +90,23 @@ A simulação ajuda a separar demandas novas das que já estão sendo avaliadas.
 
 Use dados fictícios na apresentação. O cadastro precisa do bairro e da descrição do problema, sem nome, telefone ou documento. O menu funciona pelo teclado, informa as opções em texto e permite voltar antes de confirmar. O dia é simulado, e o ranking mostra a quantidade de pendências por bairro.
 
+## Vídeo de apresentação
+
+O vídeo deve ser publicado no YouTube com a visibilidade **Não listado**.
+
+Link: **https://www.youtube.com/watch?v=nUAp6jtt6tw**
+
+## Limitações
+
+O FloodGuard é um protótipo acadêmico baseado em uma comunidade e em dias simulados. A aplicação principal usa arquivos CSV locais, deve ser executada por uma pessoa de cada vez e não possui autenticação real nos perfis de comunidade e equipe. A base de demonstração é fictícia e, por isso, os indicadores não representam dados oficiais nem substituem sistemas públicos de atendimento.
+
+## Conclusões e aprendizados
+
+O projeto demonstrou como listas, filas, pilhas, dicionários e matrizes podem representar diferentes etapas do acompanhamento de demandas comunitárias. A implementação também reforçou a importância de validar entradas, preservar o histórico, confirmar alterações antes da gravação e interpretar os indicadores dentro dos limites de uma simulação. Como aprendizado, a combinação das estruturas de dados com regras simples de prioridade tornou possível organizar registros, consultas e decisões de acompanhamento de forma clara e reproduzível.
+
 ## Arquivos do projeto
+
+> **Extensões opcionais:** `pyhtml-beta/` e `deploy/aws/` são demonstrações extras e não fazem parte da execução principal exigida em terminal.
 
 - `src/`: aplicação de terminal e relatórios.
 - `dados/`: catálogos, base de exemplo e arquivos da execução.
