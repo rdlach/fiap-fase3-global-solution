@@ -1,0 +1,10 @@
+.terraform/
+*.tfstate*
+*.tfvars
+*.tfvars.json
+*.tfplan
+crash*.log
+
+jose.zip
+
+plano-jose.log

@@ -42,7 +42,7 @@ class Formularios(HTMLParser):
             self.atual = None
 
 
-class TestInterfaceHTML(unittest.TestCase):
+class BaseInterface(unittest.TestCase):
     def setUp(self):
         self.temporario = tempfile.TemporaryDirectory(prefix='floodguard-html-')
         self.addCleanup(self.temporario.cleanup)
@@ -69,16 +69,18 @@ class TestInterfaceHTML(unittest.TestCase):
         self.servidor.server_close()
         self.thread.join(timeout=2)
 
-    def requisicao(self, caminho, dados=None, token=True):
+    def requisicao(self, caminho, dados=None, token=True, cookie=None):
         conexao = HTTPConnection('127.0.0.1', self.servidor.server_port, timeout=5)
         self.addCleanup(conexao.close)
+        cabecalhos = {'Cookie': cookie} if cookie else {}
         if dados is None:
-            conexao.request('GET', caminho)
+            conexao.request('GET', caminho, headers=cabecalhos)
         else:
             campos = dict(dados)
             if token:
                 campos['token'] = tela.TOKEN
-            conexao.request('POST', caminho, urlencode(campos), {'Content-Type': 'application/x-www-form-urlencoded'})
+            cabecalhos['Content-Type'] = 'application/x-www-form-urlencoded'
+            conexao.request('POST', caminho, urlencode(campos), cabecalhos)
         resposta = conexao.getresponse()
         return resposta.status, resposta.read().decode('utf-8'), dict(resposta.getheaders())
 
@@ -92,8 +94,10 @@ class TestInterfaceHTML(unittest.TestCase):
         self.assertEqual(resposta[0], 303)
         return sistema.carregar(self.bairros)[-1]
 
+
+class TestInterfaceHTML(BaseInterface):
     def test_menu_e_consultas_nao_gravam_dados(self):
-        for caminho in ['/', '/comunidade', '/equipe', '/consulta', '/resumo', '/pendencias', '/equipe/fila', '/equipe/status', '/equipe/dias', '/encerrar']:
+        for caminho in ['/', '/comunidade', '/equipe', '/consulta', '/resumo', '/pendencias', '/bairros', '/ajuda', '/equipe/fifo', '/equipe/historico', '/equipe/recentes', '/equipe/fila', '/equipe/status', '/equipe/dias', '/encerrar']:
             with self.subTest(caminho=caminho):
                 status, html, _ = self.requisicao(caminho)
                 self.assertEqual(status, 200)
@@ -106,7 +110,7 @@ class TestInterfaceHTML(unittest.TestCase):
     def test_css_e_fontes_da_beta_permanecem_isolados(self):
         status, html, _ = self.requisicao('/')
         self.assertEqual(status, 200)
-        self.assertIn('pyHTML', html)
+        self.assertIn('Cuide do seu bairro', html)
         self.assertIn('href="/style.css"', html)
         status, css, cabecalhos = self.requisicao('/style.css')
         self.assertEqual(status, 200)
@@ -177,9 +181,44 @@ class TestInterfaceHTML(unittest.TestCase):
         status, html, _ = self.requisicao('/ocorrencia?codigo=' + codigo)
         self.assertEqual(status, 200)
         self.assertIn(item['descricao'], html)
-        self.assertNotIn('Reforçar esta ocorrência', html)
+        self.assertNotIn('Também tenho esse problema', html)
         self.assertEqual(self.requisicao('/reforcar', {'codigo': codigo})[0], 400)
         self.assertEqual(sistema.carregar(self.bairros)[0]['solicitacoes'], '2')
+
+    def test_cadastro_de_animais(self):
+        base = {'distrito': self.bairro['distrito'], 'id_bairro': self.bairro['id'], 'categoria': 'Animais'}
+        for tipo, urgencia in [('Cães latindo sem parar', 'Baixa'), ('Animal atropelado', 'Alta'),
+                               ('Retirada de ninho ou animal silvestre', 'Média')]:
+            with self.subTest(tipo=tipo):
+                self.assertEqual(self.requisicao('/salvar', dict(base, tipo=tipo, descricao=sistema.DESCRICOES[tipo]))[0], 303)
+                item = sistema.carregar(self.bairros)[-1]
+                self.assertEqual((item['categoria'], item['tipo'], item['urgencia']), ('Animais', tipo, urgencia))
+        _, html, _ = self.requisicao('/resumo')
+        self.assertIn('Animais', html)
+        _, html, _ = self.requisicao('/cadastro', dict(base, etapa='tipo'))
+        self.assertIn('Cães latindo sem parar', html)
+
+    def test_cadastro_de_incendio_e_historico(self):
+        dados = {'distrito': self.bairro['distrito'], 'id_bairro': self.bairro['id'],
+                 'categoria': 'Incêndio', 'tipo': 'Incêndio em imóvel',
+                 'descricao': 'Ocorrência fictícia para teste.'}
+        self.assertEqual(self.requisicao('/salvar', dados)[0], 303)
+        self.assertEqual(self.requisicao('/atualizar', {'codigo': 'FG-001', 'status': 'Em análise'})[0], 303)
+        _, html, _ = self.requisicao('/equipe/historico')
+        self.assertIn('FG-001: Aberta → Em análise', html)
+        _, html, _ = self.requisicao('/equipe/fifo')
+        self.assertNotIn('FG-001', html)
+        _, html, _ = self.requisicao('/resumo')
+        self.assertIn('Incêndio', html)
+        self.assertIn('1 (100.0%)', html)
+
+    def test_ajuda_fica_disponivel_com_csv_invalido(self):
+        self.csv.write_text('invalido', encoding='utf-8')
+        status, html, _ = self.requisicao('/ajuda')
+        self.assertEqual(status, 200)
+        for numero in ('190', '192', '193', '199'):
+            self.assertIn('href="tel:' + numero + '"', html)
+        self.assertIn('Receber alertas', html)
 
     def test_dias_confirmacao_e_prioridade_sem_pontos_na_comunidade(self):
         self.cadastrar()
@@ -230,6 +269,95 @@ class TestInterfaceHTML(unittest.TestCase):
         self.assertFalse(self.servidor.encerrar)
         self.assertEqual(self.requisicao('/encerrar', self.campos(html, '/encerrar'))[0], 200)
         self.assertTrue(self.servidor.encerrar)
+
+
+class TestSitePublico(BaseInterface):
+    """Com código da equipe e modo público, só a equipe altera o que já foi cadastrado."""
+    CODIGO = 'codigo-de-teste-da-equipe'
+
+    def setUp(self):
+        super().setUp()
+        for nome, valor in [('CODIGO_EQUIPE', self.CODIGO), ('SEGREDO_COOKIE', 'segredo-de-teste'), ('MODO_PUBLICO', True)]:
+            alteracao = patch.object(tela, nome, valor)
+            alteracao.start()
+            self.addCleanup(alteracao.stop)
+
+    def entrar_como_equipe(self):
+        status, _, cabecalhos = self.requisicao('/equipe/entrar', {'codigo': self.CODIGO})
+        self.assertEqual(status, 303)
+        cookie = cabecalhos['Set-Cookie']
+        self.assertIn('HttpOnly', cookie)
+        self.assertIn('Secure', cookie)
+        self.assertIn('SameSite=Strict', cookie)
+        return cookie.split(';')[0]
+
+    def test_visitante_nao_altera_nem_ve_a_area_da_equipe(self):
+        item = self.cadastrar()
+        antes = (self.csv.read_bytes(), self.dia.exists())
+        for caminho in ['/equipe', '/equipe/fila', '/equipe/status', '/equipe/dias', '/exemplos']:
+            with self.subTest(caminho=caminho):
+                status, html, _ = self.requisicao(caminho)
+                self.assertEqual(status, 200)
+                self.assertIn('Código de acesso', html)
+                self.assertNotIn('Alterar status', html)
+        acoes = {'/confirmar-status': {'codigo': item['id'], 'status': 'Concluída'},
+                 '/atualizar': {'codigo': item['id'], 'status': 'Concluída'},
+                 '/confirmar-dias': {'dias': '5'}, '/avancar': {'dias': '5', 'dia_anterior': '1'},
+                 '/carregar-exemplos': {}}
+        for caminho, dados in acoes.items():
+            with self.subTest(caminho=caminho):
+                self.assertEqual(self.requisicao(caminho, dados)[0], 403)
+        self.assertEqual((self.csv.read_bytes(), self.dia.exists()), antes)
+
+    def test_codigo_errado_e_cookie_falso_sao_recusados(self):
+        status, html, cabecalhos = self.requisicao('/equipe/entrar', {'codigo': 'errado'})
+        self.assertEqual(status, 403)
+        self.assertNotIn('Set-Cookie', cabecalhos)
+        for cookie in ['fg_equipe=9999999999.abc', 'fg_equipe=1.' + tela.assinar('equipe|1'), 'fg_equipe=']:
+            with self.subTest(cookie=cookie):
+                self.assertEqual(self.requisicao('/atualizar', {'codigo': 'FG-001', 'status': 'Concluída'}, cookie=cookie)[0], 403)
+
+    def test_equipe_com_codigo_altera_status_e_sai(self):
+        item = self.cadastrar()
+        cookie = self.entrar_como_equipe()
+        status, html, _ = self.requisicao('/equipe/fila', cookie=cookie)
+        self.assertIn('Pontos', html)
+        self.assertEqual(self.requisicao('/atualizar', {'codigo': item['id'], 'status': 'Em análise'}, cookie=cookie)[0], 303)
+        self.assertEqual(sistema.carregar(self.bairros)[0]['status'], 'Em análise')
+        status, _, cabecalhos = self.requisicao('/equipe/sair', {}, cookie=cookie)
+        self.assertEqual(status, 303)
+        self.assertIn('Max-Age=0', cabecalhos['Set-Cookie'])
+
+    def test_comunidade_nao_oferece_carga_de_exemplos(self):
+        _, html, _ = self.requisicao('/comunidade')
+        self.assertNotIn('Carregar 12 exemplos', html)
+
+    def test_reforco_uma_vez_por_pessoa(self):
+        item = self.cadastrar()
+        status, _, cabecalhos = self.requisicao('/reforcar', {'codigo': item['id']})
+        self.assertEqual(status, 303)
+        cookie = cabecalhos['Set-Cookie'].split(';')[0]
+        self.assertEqual(self.requisicao('/reforcar', {'codigo': item['id']}, cookie=cookie)[0], 400)
+        self.assertEqual(sistema.carregar(self.bairros)[0]['solicitacoes'], '2')
+
+    def test_limites_de_gravacao(self):
+        dados = {'distrito': self.bairro['distrito'], 'id_bairro': self.bairro['id'], 'categoria': 'Limpeza', 'tipo': 'Lixo acumulado'}
+        self.assertEqual(self.requisicao('/salvar', dict(dados, descricao='x' * (tela.LIMITE_DESCRICAO + 1)))[0], 400)
+        self.assertFalse(self.csv.exists())
+        self.assertEqual(self.requisicao('/salvar', dict(dados, descricao='x' * 5000))[0], 400)
+        with patch.object(tela, 'LIMITE_REGISTROS', 1):
+            self.cadastrar()
+            self.assertEqual(self.requisicao('/salvar', dict(dados, descricao='Outro'))[0], 400)
+        self.assertEqual(len(sistema.carregar(self.bairros)), 1)
+
+    def test_resumo_publico_traz_graficos_sem_estilo_inline(self):
+        self.assertEqual(self.requisicao('/carregar-exemplos', {}, cookie=self.entrar_como_equipe())[0], 303)
+        status, html, cabecalhos = self.requisicao('/resumo')
+        self.assertEqual(status, 200)
+        self.assertEqual(html.count('<svg'), 3)
+        self.assertIn('role="img"', html)
+        self.assertNotIn('style=', html)
+        self.assertNotIn('<script', html)
 
 
 if __name__ == '__main__':

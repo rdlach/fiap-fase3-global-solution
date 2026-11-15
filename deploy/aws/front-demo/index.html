@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#103c36">
+<title>FloodGuard · Ocorrências do bairro</title>
+<link rel="stylesheet" href="estilo.css">
+<script defer src="catalogo.js"></script>
+<script defer src="app.js"></script>
+</head>
+<body>
+<header class="topo">
+  <div class="limite barra">
+    <a class="marca" href="./">Flood<span>Guard</span></a>
+    <nav aria-label="Áreas do FloodGuard">
+      <button id="comunidade" aria-pressed="true">Comunidade</button>
+      <button id="equipe" aria-pressed="false">Equipe</button>
+    </nav>
+  </div>
+</header>
+<main class="limite">
+  <section class="hero">
+    <div>
+      <p class="localidade">SÃO PAULO / REGIÃO CENTRAL</p>
+      <h1 id="chamada">Cuide do seu bairro.</h1>
+      <p id="subtitulo">Conte o que aconteceu e acompanhe as ocorrências da comunidade.</p>
+      <button id="cadastro" class="principal">+ Registrar ocorrência</button>
+    </div>
+    <div class="simulacao">
+      <span>Dia simulado</span>
+      <strong id="dia-atual">1</strong>
+      <form id="avancar" hidden>
+        <label for="dias">Dias a avançar</label>
+        <div class="acoes"><input id="dias" type="number" min="1" max="365" step="1" value="1" required><button type="submit">Avançar</button></div>
+      </form>
+    </div>
+  </section>
+  <section class="ajuda" id="ajuda" aria-labelledby="ajuda-titulo">
+    <div>
+      <h2 id="ajuda-titulo">Precisa de ajuda agora?</h2>
+      <p>Em caso de risco imediato, ligue para o serviço responsável. O registro no FloodGuard é uma simulação.</p>
+    </div>
+    <div class="contatos">
+      <div><a class="ligar" href="tel:193">Bombeiros <strong>193</strong></a><a href="https://www.ssp.sp.gov.br/servicos/coordenacao-sistema-estadual-atendimento-emergencias">Página oficial dos Bombeiros</a></div>
+      <div><a class="ligar" href="tel:190">Polícia Militar <strong>190</strong></a><a href="https://policiamilitar.sp.gov.br/">Portal da PM de São Paulo</a></div>
+      <div><a class="ligar" href="tel:192">SAMU <strong>192</strong></a><span>Urgência médica</span></div>
+      <div><a class="ligar" href="tel:199">Defesa Civil <strong>199</strong></a><a href="https://wa.me/556120344611">WhatsApp para receber alertas</a></div>
+    </div>
+  </section>
+  <p id="mensagem" role="status"></p>
+  <div id="resumo" class="indicadores" aria-label="Resumo das ocorrências"></div>
+  <div class="painel-duplo">
+    <section class="painel">
+      <h2 id="titulo">Ocorrências</h2>
+      <div class="filtros">
+        <label class="busca">Buscar ocorrência<input id="busca" type="search" placeholder="Código, bairro ou descrição"></label>
+        <label>Distrito<select id="f-distrito"></select></label>
+        <label>Bairro<select id="f-bairro"></select></label>
+        <label>Categoria<select id="f-categoria"></select></label>
+        <label>Status<select id="f-status"></select></label>
+      </div>
+      <div class="linha-lista"><p id="total" aria-live="polite"></p><button id="limpar" class="texto">Limpar filtros</button></div>
+      <ul id="registros" class="registros"></ul>
+    </section>
+    <aside class="painel ranking">
+      <h2>Pendências por bairro</h2>
+      <p>Selecione um bairro para consultar as ocorrências.</p>
+      <ol id="ranking"></ol>
+    </aside>
+  </div>
+  <footer>Demonstração com dados simulados. Alterações salvas neste navegador.</footer>
+</main>
+<dialog id="dialogo" aria-labelledby="titulo-dialogo">
+  <div class="dialogo-topo">
+    <div><p id="progresso"></p><h2 id="titulo-dialogo">Registrar ocorrência</h2></div>
+    <button id="fechar" type="button" aria-label="Fechar cadastro">×</button>
+  </div>
+  <form id="novo">
+    <div id="localizacao">
+      <h3>Onde aconteceu?</h3>
+      <label>Distrito<select id="distrito"></select></label>
+      <label>Bairro<select id="local" required></select></label>
+    </div>
+    <div id="problema" hidden>
+      <h3>O que aconteceu?</h3>
+      <label>Categoria<select id="categoria" required></select></label>
+      <label>Tipo de problema<select id="tipo" required></select></label>
+      <label>Como você descreveria a situação?<textarea id="descricao" required maxlength="500" rows="3"></textarea></label>
+      <p id="orientacao" class="orientacao" hidden></p>
+      <p id="previa"></p>
+    </div>
+    <div id="revisao" hidden>
+      <h3>Confira antes de salvar</h3>
+      <dl id="detalhes"></dl>
+    </div>
+    <p id="mensagem-cadastro" role="status"></p>
+    <div class="dialogo-acoes">
+      <button id="voltar" type="button">Voltar</button>
+      <button id="continuar" type="submit" class="principal">Continuar</button>
+    </div>
+  </form>
+</dialog>
+</body>
+</html>

@@ -1,14 +1,19 @@
-"""pyHTML — Versão Beta. Iniciar com: python pyhtml-beta/src/interface_html.py."""
+"""pyHTML Versão Beta. Para iniciar rode python pyhtml-beta/src/interface_html.py."""
 import csv
 from html import escape
+from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import hashlib
+import hmac
 from pathlib import Path
 import secrets
 import sys
+import time
 from urllib.parse import parse_qs, urlencode, urlsplit
 import webbrowser
 
 import main as sistema
+import painel
 from localidades import carregar_bairros, listar_distritos, normalizar
 from prioridades import calcular_prioridade, carregar_dia, salvar_dia
 
@@ -16,6 +21,35 @@ ENDERECO = '127.0.0.1'
 PORTA = 8765
 TOKEN = secrets.token_urlsafe(24)
 RAIZ = Path(__file__).resolve().parents[1]
+
+# Travas do site publicado. No uso local, sem CODIGO_EQUIPE, nada muda.
+CODIGO_EQUIPE = None        # quem define é a Lambda, com ele a área da equipe pede o código
+SEGREDO_COOKIE = ''         # chave que assina o cookie da equipe
+MODO_PUBLICO = False        # no site publicado o cookie é Secure e cada pessoa reforça uma vez
+VALIDADE_EQUIPE = 2 * 60 * 60
+LIMITE_REGISTROS = 500
+LIMITE_DESCRICAO = 300
+LIMITE_SOLICITACOES = 999
+LIMITE_FORMULARIO = 4096
+ACOES_DA_EQUIPE = {'/confirmar-status', '/atualizar', '/confirmar-dias', '/avancar', '/carregar-exemplos'}
+
+
+def exige_equipe(caminho):
+    if CODIGO_EQUIPE is None:
+        return False
+    area = caminho.startswith('/equipe') and caminho not in ('/equipe/entrar', '/equipe/sair')
+    return area or caminho == '/exemplos' or caminho in ACOES_DA_EQUIPE
+
+
+def assinar(valor):
+    return hmac.new(SEGREDO_COOKIE.encode(), valor.encode(), hashlib.sha256).hexdigest()
+
+
+def cookie_http(nome, valor, validade):
+    partes = [f'{nome}={valor}', 'Path=/', f'Max-Age={validade}', 'HttpOnly', 'SameSite=Strict']
+    if MODO_PUBLICO:
+        partes.append('Secure')
+    return '; '.join(partes)
 
 
 def texto(valor):
@@ -57,15 +91,37 @@ def opcoes_texto(valores):
     return opcoes
 
 
+# Em qual aba do menu cada tela se encaixa. Quem não está aqui não marca nenhuma.
+SECAO_DO_MENU = {
+    **dict.fromkeys(['Comunidade', 'Cadastrar ocorrência', 'Consultar ocorrências', 'Detalhes da ocorrência',
+                     'Reforçar ocorrência', 'Pendências por bairro', 'Ocorrências por bairro e categoria',
+                     'Carregar exemplos'], '/comunidade'),
+    **dict.fromkeys(['Área da equipe', 'Equipe de acompanhamento', 'Fila por ordem de registro', 'Últimas atualizações',
+                     'Histórico de status', 'Fila de atendimento', 'Escolher ocorrência para atualizar',
+                     'Alterar status', 'Avançar dias', 'Confirmar novo status', 'Confirmar avanço de dias'], '/equipe'),
+}
+
+
 def pagina(titulo, conteudo, mensagem=''):
+    if titulo == 'Cadastrar ocorrência':
+        conteudo = ('<p>Risco imediato? <a href="/ajuda">Veja os contatos de emergência.</a></p>'
+                    + conteudo)
     aviso = f'<p role="status"><strong>{texto(mensagem)}</strong></p>' if mensagem else ''
+    secao = SECAO_DO_MENU.get(titulo)
+
+    def item_do_menu(rotulo, destino):
+        html = botao(rotulo, destino)
+        if secao == destino:
+            html = html.replace('<button>', '<button aria-current="page">')
+        return html
+
     return f'''<!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FloodGuard — {texto(titulo)}</title><link rel="stylesheet" href="/style.css"></head><body>
-<header><p class="versao">pyHTML · Versão Beta</p><h1>FloodGuard</h1><p>Demandas comunitárias da região central de São Paulo.</p></header>
-<nav aria-label="Menu principal">{botao('Menu inicial', '/')}{botao('Comunidade', '/comunidade')}{botao('Equipe de acompanhamento', '/equipe')}</nav>
-<main><h2>{texto(titulo)}</h2>{aviso}{conteudo}</main><hr>
-<footer><p>Protótipo acadêmico local. Perfis simulados e registros fictícios ou consentidos.</p></footer>
+<title>FloodGuard | {texto(titulo)}</title><link rel="stylesheet" href="/style.css"></head><body>
+<header><h1><a href="/">FloodGuard</a></h1><p>Demandas comunitárias da região central de São Paulo.</p></header>
+<nav aria-label="Menu principal">{item_do_menu('Menu inicial', '/')}{item_do_menu('Comunidade', '/comunidade')}{item_do_menu('Equipe', '/equipe')}<a class="atalho" href="/ajuda">Ajuda de emergência</a></nav>
+<main><h2>{texto(titulo)}</h2>{aviso}{conteudo}</main>
+<footer><p>Protótipo acadêmico · Perfis simulados e registros fictícios ou consentidos.</p></footer>
 </body></html>'''
 
 
@@ -108,7 +164,7 @@ def tabela(registros, dia, equipe=False):
         else:
             acao = botao('Ver detalhes', '/ocorrencia', {'codigo': item['id']})
             if item['status'] != 'Concluída':
-                acao += botao('Reforçar esta ocorrência', '/reforco', {'codigo': item['id']})
+                acao += botao('Também tenho esse problema', '/reforco', {'codigo': item['id']})
         html += f'<td>{acao}</td></tr>'
     return html + '</tbody></table></div>'
 
@@ -167,7 +223,7 @@ def cadastro(dados, bairros, dia):
         if dados.get('tipo_anterior', tipo) != tipo:
             rascunho['descricao'] = ''
         descricao = rascunho.pop('descricao') or sistema.DESCRICOES.get(tipo, '')
-        campos = f'<p><label for="descricao">Descrição (você pode complementar o texto)</label><br><textarea id="descricao" name="descricao" rows="4" cols="50" maxlength="2000" required>{texto(descricao)}</textarea></p>'
+        campos = f'<p><label for="descricao">Descrição (você pode complementar o texto)</label><br><textarea id="descricao" name="descricao" rows="4" cols="50" maxlength="300" required>{texto(descricao)}</textarea></p>'
         campos += '<button name="etapa" value="revisao">Revisar cadastro</button> <button name="etapa" value="tipo" formnovalidate>Voltar</button>'
     elif etapa == 'revisao':
         bairro = local_do_cadastro(rascunho, bairros)
@@ -183,15 +239,10 @@ def cadastro(dados, bairros, dia):
     return pagina('Cadastrar ocorrência', conteudo)
 
 
-def resumo(registros, visao):
-    conteudo = f'<p>Total de ocorrências: <strong>{len(registros)}</strong></p><ul>'
-    for status in sistema.STATUS:
-        quantidade = 0
-        for item in registros:
-            if item['status'] == status:
-                quantidade += 1
-        conteudo += f'<li>{texto(status)}: {quantidade}</li>'
-    return pagina('Resumo', conteudo + '</ul>' + botao('Voltar', visao))
+def resumo(registros, visao, dia):
+    conteudo = painel.indicadores(registros, sistema.CATEGORIAS, sistema.STATUS, dia)
+    conteudo += painel.graficos(registros, sistema.CATEGORIAS, sistema.STATUS, dia)
+    return pagina('Resumo', conteudo + botao('Voltar', visao))
 
 
 def consulta(dados, registros, bairros, dia):
@@ -220,11 +271,13 @@ def renderizar(caminho, dados, registros, bairros, dia):
         return (RAIZ / 'index.html').read_text(encoding='utf-8')
     if caminho == '/comunidade':
         conteudo = '<div class="menu-opcoes">'
-        for rotulo, destino in [('Registrar um problema', '/cadastro'), ('Consultar ocorrências', '/consulta'), ('Reforçar uma ocorrência existente', '/consulta'), ('Ver resumo', '/resumo'), ('Ver pendências por bairro', '/pendencias')]:
+        for rotulo, destino in [('Registrar um problema', '/cadastro'), ('Consultar ocorrências', '/consulta'), ('Reforçar uma ocorrência existente', '/consulta'), ('Ver resumo', '/resumo'), ('Ver pendências por bairro', '/pendencias'), ('Explorar por bairro e categoria', '/bairros')]:
             conteudo += botao(rotulo, destino)
         conteudo += '</div>'
         if not registros:
-            conteudo += '<p>A base ainda está vazia.</p>' + botao('Carregar 12 exemplos fictícios', '/exemplos')
+            conteudo += '<p>A base ainda está vazia.</p>'
+            if CODIGO_EQUIPE is None:
+                conteudo += botao('Carregar 12 exemplos fictícios', '/exemplos')
         return pagina('Comunidade', conteudo, dados.get('mensagem', ''))
     if caminho == '/cadastro':
         return cadastro(dados, bairros, dia)
@@ -234,7 +287,7 @@ def renderizar(caminho, dados, registros, bairros, dia):
         item = sistema.encontrar_ocorrencia(registros, dados.get('codigo', ''))
         conteudo = detalhes(item, dia)
         if item['status'] != 'Concluída':
-            conteudo += botao('Reforçar esta ocorrência', '/reforco', {'codigo': item['id']})
+            conteudo += botao('Também tenho esse problema', '/reforco', {'codigo': item['id']})
         return pagina('Detalhes da ocorrência', conteudo + botao('Voltar à consulta', '/consulta'))
     if caminho == '/reforco':
         item = sistema.encontrar_ocorrencia(registros, dados.get('codigo', ''))
@@ -245,7 +298,7 @@ def renderizar(caminho, dados, registros, bairros, dia):
         return pagina('Reforçar ocorrência', conteudo + botao('Cancelar', '/consulta'))
     if caminho == '/resumo':
         visao = '/equipe' if dados.get('visao') == 'equipe' else '/comunidade'
-        return resumo(registros, visao)
+        return resumo(registros, visao, dia)
     if caminho == '/pendencias':
         quantidades = {}
         for item in registros:
@@ -253,18 +306,43 @@ def renderizar(caminho, dados, registros, bairros, dia):
                 nome = item['bairro']
                 quantidades[nome] = quantidades.get(nome, 0) + 1
         conteudo = '<ul>'
-        for bairro in sorted(quantidades):
+        for bairro in sorted(quantidades, key=lambda nome: (-quantidades[nome], nome.casefold())):
             conteudo += f'<li>{texto(bairro)}: {quantidades[bairro]} pendência(s)</li>'
         if not quantidades:
             conteudo += '<li>Nenhuma pendência registrada.</li>'
         return pagina('Pendências por bairro', conteudo + '</ul>' + botao('Voltar', '/comunidade'))
+    if caminho == '/equipe/entrar':
+        if CODIGO_EQUIPE is None:
+            return pagina('Área da equipe', '<p>Neste modo local a área da equipe não pede código.</p>' + botao('Abrir a equipe', '/equipe'))
+        return pagina('Área da equipe', pedir_codigo())
     if caminho == '/equipe':
         conteudo = f'<p>Dia simulado atual: <strong>{dia}</strong></p><div class="menu-opcoes">'
-        for rotulo, destino in [('Ver fila por pontuação', '/equipe/fila'), ('Atualizar status', '/equipe/status'), ('Avançar dias da simulação', '/equipe/dias')]:
+        for rotulo, destino in [('Ver fila por pontuação', '/equipe/fila'), ('Fila por ordem de registro', '/equipe/fifo'), ('Histórico de status', '/equipe/historico'), ('Últimas atualizações', '/equipe/recentes'), ('Atualizar status', '/equipe/status'), ('Avançar dias da simulação', '/equipe/dias')]:
             conteudo += botao(rotulo, destino)
         conteudo += botao('Ver resumo', '/resumo', {'visao': 'equipe'})
         conteudo += '</div>'
+        if CODIGO_EQUIPE is not None:
+            conteudo += formulario('/equipe/sair', '<button formnovalidate>Sair da área da equipe</button>')
         return pagina('Equipe de acompanhamento', conteudo, dados.get('mensagem', ''))
+    if caminho == '/bairros':
+        grupos = {}
+        for item in registros:
+            grupos.setdefault(item['bairro'], {}).setdefault(item['categoria'], []).append(item)
+        conteudo = ''
+        for bairro, categorias in sorted(grupos.items()):
+            conteudo += f'<details><summary>{texto(bairro)}</summary>'
+            for categoria, itens in sorted(categorias.items()):
+                conteudo += f'<h3>{texto(categoria)}</h3>' + tabela(itens, dia)
+            conteudo += '</details>'
+        return pagina('Ocorrências por bairro e categoria', conteudo or '<p>Nenhuma ocorrência registrada.</p>')
+    if caminho == '/equipe/fifo':
+        fila = sorted((item for item in registros if item['status'] == 'Aberta'),
+                      key=lambda item: int(item['id'][3:]))
+        return pagina('Fila por ordem de registro', tabela(fila, dia, equipe=True))
+    if caminho in ('/equipe/historico', '/equipe/recentes'):
+        recentes = caminho.endswith('/recentes')
+        return pagina('Últimas atualizações' if recentes else 'Histórico de status',
+                      painel.historico(registros, recentes))
     if caminho == '/equipe/fila':
         fila = []
         for item in registros:
@@ -296,6 +374,14 @@ def renderizar(caminho, dados, registros, bairros, dia):
     raise ValueError('Página não encontrada.')
 
 
+def pedir_codigo():
+    campo = ('<p>Somente a equipe altera status e avança os dias. Informe o código de acesso.</p>'
+             '<p><label for="codigo">Código de acesso</label><br>'
+             '<input id="codigo" name="codigo" type="password" autocomplete="off" maxlength="64" required></p>'
+             '<button>Entrar</button>')
+    return formulario('/equipe/entrar', campo) + botao('Voltar ao menu inicial', '/')
+
+
 def quantidade_dias(valor):
     if not valor.isdecimal() or len(valor) > 3 or not 1 <= int(valor) <= 365:
         raise ValueError('Informe uma quantidade de 1 a 365 dias.')
@@ -313,9 +399,31 @@ def interpretar_dados(conteudo):
 
 class InterfaceHTML(BaseHTTPRequestHandler):
     """Adaptador HTTP da biblioteca padrão; as regras ficam em funções do programa."""
+    novos_cookies = ()
+
+    def cookies(self):
+        lido = SimpleCookie()
+        try:
+            lido.load(self.headers.get('Cookie', ''))
+        except Exception:
+            return {}
+        return {nome: parte.value for nome, parte in lido.items()}
+
+    def equipe_autenticada(self):
+        valor = self.cookies().get('fg_equipe', '')
+        expira, _, assinatura = valor.partition('.')
+        if not expira.isdecimal() or int(expira) < time.time():
+            return False
+        return hmac.compare_digest(assinatura, assinar('equipe|' + expira))
+
+    def reforcos_da_pessoa(self):
+        return [codigo for codigo in self.cookies().get('fg_ja', '').split('.') if codigo]
+
     def responder(self, html, status=200, tipo='text/html'):
         corpo = html.encode('utf-8')
         self.send_response(status)
+        for cookie in self.novos_cookies:
+            self.send_header('Set-Cookie', cookie)
         self.send_header('Content-Type', tipo + '; charset=utf-8')
         self.send_header('Content-Length', str(len(corpo)))
         self.send_header('Cache-Control', 'no-store')
@@ -325,6 +433,8 @@ class InterfaceHTML(BaseHTTPRequestHandler):
 
     def redirecionar(self, destino, mensagem):
         self.send_response(303)
+        for cookie in self.novos_cookies:
+            self.send_header('Set-Cookie', cookie)
         self.send_header('Location', destino + '?' + urlencode({'mensagem': mensagem}))
         self.send_header('Content-Length', '0')
         self.end_headers()
@@ -334,6 +444,12 @@ class InterfaceHTML(BaseHTTPRequestHandler):
             url = urlsplit(self.path)
             if url.path == '/style.css':
                 self.responder((RAIZ / 'style.css').read_text(encoding='utf-8'), tipo='text/css')
+                return
+            if url.path == '/ajuda':
+                self.responder(pagina('Precisa de ajuda agora?', painel.AJUDA))
+                return
+            if exige_equipe(url.path) and not self.equipe_autenticada():
+                self.responder(pagina('Área da equipe', pedir_codigo()))
                 return
             dados = interpretar_dados(url.query)
             bairros = carregar_bairros()
@@ -348,13 +464,23 @@ class InterfaceHTML(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
             tamanho = int(self.headers.get('Content-Length', '0'))
-            if not 0 < tamanho <= 32768:
+            if not 0 < tamanho <= LIMITE_FORMULARIO:
                 raise ValueError('Formulário vazio ou muito grande.')
             dados = interpretar_dados(self.rfile.read(tamanho).decode('utf-8'))
             if dados.pop('token', '') != TOKEN:
                 self.responder(pagina('Reabra o formulário', '<p>Use os botões da aplicação para confirmar a ação.</p>'), 403)
                 return
             caminho = urlsplit(self.path).path
+            if exige_equipe(caminho) and not self.equipe_autenticada():
+                self.responder(pagina('Acesso restrito', '<p>Somente a equipe pode fazer essa ação.</p>' + botao('Entrar como equipe', '/equipe/entrar')), 403)
+                return
+            if caminho == '/equipe/entrar':
+                self.entrar_na_equipe(dados)
+                return
+            if caminho == '/equipe/sair':
+                self.novos_cookies = [cookie_http('fg_equipe', '', 0)]
+                self.redirecionar('/', 'Você saiu da área da equipe.')
+                return
             bairros = carregar_bairros()
             dia = carregar_dia()
             registros = sistema.carregar(bairros, dia)
@@ -362,10 +488,22 @@ class InterfaceHTML(BaseHTTPRequestHandler):
                 self.responder(cadastro(dados, bairros, dia))
             elif caminho == '/salvar':
                 local_do_cadastro(dados, bairros)
+                if len(registros) >= LIMITE_REGISTROS:
+                    raise ValueError('A base da demonstração chegou ao limite de registros.')
+                if len(dados.get('descricao', '')) > LIMITE_DESCRICAO:
+                    raise ValueError(f'A descrição pode ter até {LIMITE_DESCRICAO} caracteres.')
                 item = sistema.registrar_ocorrencia(registros, bairros, dados.get('id_bairro', ''), dados.get('categoria', ''), dados.get('tipo', ''), dados.get('descricao', ''), dia)
                 self.redirecionar('/consulta', f"Ocorrência {item['id']} cadastrada.")
             elif caminho == '/reforcar':
-                sistema.registrar_reforco(registros, dados.get('codigo', ''))
+                codigo = dados.get('codigo', '')
+                ja = self.reforcos_da_pessoa()
+                if MODO_PUBLICO and codigo in ja:
+                    raise ValueError('Você já registrou que também tem esse problema.')
+                if int(sistema.encontrar_ocorrencia(registros, codigo)['solicitacoes']) >= LIMITE_SOLICITACOES:
+                    raise ValueError('Essa ocorrência já atingiu o limite de solicitações.')
+                sistema.registrar_reforco(registros, codigo)
+                if MODO_PUBLICO:
+                    self.novos_cookies = [cookie_http('fg_ja', '.'.join((ja + [codigo])[-60:]), 30 * 86400)]
                 self.redirecionar('/consulta', 'Sua solicitação foi vinculada à ocorrência.')
             elif caminho == '/confirmar-status':
                 item = sistema.encontrar_ocorrencia(registros, dados.get('codigo', ''))
@@ -377,7 +515,7 @@ class InterfaceHTML(BaseHTTPRequestHandler):
                 conteudo += botao('Voltar sem alterar', '/equipe/status', {'codigo': item['id'], 'status': status})
                 self.responder(pagina('Confirmar novo status', conteudo))
             elif caminho == '/atualizar':
-                sistema.registrar_status(registros, dados.get('codigo', ''), dados.get('status', ''))
+                sistema.registrar_status(registros, dados.get('codigo', ''), dados.get('status', ''), dia)
                 self.redirecionar('/equipe', 'Status atualizado.')
             elif caminho == '/confirmar-dias':
                 dias = quantidade_dias(dados.get('dias', ''))
@@ -408,6 +546,15 @@ class InterfaceHTML(BaseHTTPRequestHandler):
             self.responder(pagina('Confira o formulário', f'<p>{texto(erro)}</p><p>Use o botão Voltar do navegador para corrigir os campos.</p>' + botao('Menu da comunidade', '/comunidade')), 400)
         except OSError:
             self.responder(pagina('Não foi possível salvar', '<p>A alteração não foi aplicada. Confira os arquivos e tente novamente.</p>'), 500)
+
+    def entrar_na_equipe(self, dados):
+        informado = dados.get('codigo', '').encode()
+        if CODIGO_EQUIPE is None or not hmac.compare_digest(informado, CODIGO_EQUIPE.encode()):
+            self.responder(pagina('Área da equipe', '<p>Código incorreto.</p>' + pedir_codigo()), 403)
+            return
+        expira = str(int(time.time()) + VALIDADE_EQUIPE)
+        self.novos_cookies = [cookie_http('fg_equipe', expira + '.' + assinar('equipe|' + expira), VALIDADE_EQUIPE)]
+        self.redirecionar('/equipe', 'Acesso liberado.')
 
 
 def main():

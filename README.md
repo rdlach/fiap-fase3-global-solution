@@ -86,7 +86,8 @@ Use dados fictícios na apresentação. O cadastro precisa do bairro e da descri
 - `dados/`: catálogos, base de exemplo e arquivos da execução.
 - `docs/`: regras, escolhas do projeto e registro de uso de IA.
 - `tests/`: testes da aplicação de terminal.
-- `pyhtml-beta/`: versão web em Python, disponível como demonstração extra.
+- `pyhtml-beta/`: versão web em Python, a Beta, publicada na AWS como demonstração extra.
+- `deploy/aws/`: Terraform e scripts que publicam a Beta na AWS.
 
 Para rodar os testes:
 
@@ -94,7 +95,56 @@ Para rodar os testes:
 python3 -m unittest discover -s tests -v
 ```
 
-[Abrir a demonstração web](https://d1o47fa2nugvwl.cloudfront.net/)
+## Versão Beta na AWS
+
+A Beta é a mesma aplicação do terminal levada para o navegador. Ela roda de verdade na AWS em [floodguard.com.br](https://floodguard.com.br), com os registros guardados em um arquivo no S3. Ela é um extra e não substitui a entrega em terminal.
+
+### O que ela tem a mais
+
+- Menus, formulários e botões no navegador, com visual próprio e sem JavaScript.
+- Categorias Inundação, Incêndio, Acidentes e Animais, além das quatro do terminal.
+- Gráficos no resumo, feitos no servidor em SVG: ocorrências por categoria e status, pendências por bairro e registros por dia simulado.
+- Tela de ajuda com os telefones de emergência.
+- No estilo de um site de ocorrências, qualquer pessoa registra um problema e pode dizer que também tem aquele problema, uma vez por ocorrência. Só a equipe muda status e avança os dias, e para entrar ela precisa de um código de acesso.
+
+### Como está montada na AWS
+
+| Recurso | Papel |
+| --- | --- |
+| CloudFront | Entrada do site em HTTPS, com o domínio floodguard.com.br e cache das páginas fixas |
+| WAF | Bloqueia IPs que mandam requisições demais |
+| API Gateway | Recebe as chamadas do CloudFront e limita a 5 por segundo |
+| Lambda | Executa o código Python da Beta, no máximo 5 ao mesmo tempo |
+| S3 do front | Arquivos estáticos da demonstração anterior |
+| S3 do estado | Ocorrências e dia simulado, em um arquivo versionado e privado |
+
+A API só aceita chamadas que vêm do CloudFront, e os dois buckets são privados.
+
+### Terraform
+
+Toda a infraestrutura está descrita em `deploy/aws/`. O Terraform cria os recursos da tabela acima, o código de acesso da equipe e os alertas de custo. O passo a passo, com `empacotar-jose.sh` e `terraform apply`, está em [deploy/aws/README.md](deploy/aws/README.md). O estado do Terraform, os planos e os arquivos de variáveis ficam fora do Git.
+
+O código da equipe nasce no Terraform e vai direto para a Lambda. Para ver o valor, rode `terraform output -raw codigo_equipe` dentro de `deploy/aws`.
+
+### Segurança e custo
+
+O projeto é acadêmico e a conta é pessoal, então o foco foi não ter surpresa na fatura.
+
+- O CloudFront está no plano Free, a zero por mês e sem cobrança extra por tráfego ou ataque.
+- A Lambda tem teto de execuções, a API tem teto de requisições e o WAF limita cada IP.
+- O formulário aceita no máximo 4 KB, a descrição 300 caracteres e a base 500 registros.
+- O S3 descarta as versões antigas do estado depois de um dia.
+- Um orçamento de 3 dólares por mês e a detecção de anomalia mandam aviso por e-mail.
+- Para parar tudo na hora, basta zerar a concorrência da Lambda, como descrito no README do deploy.
+
+### Rodar e testar a Beta
+
+```sh
+python3 pyhtml-beta/src/interface_html.py
+python3 -m unittest discover -s pyhtml-beta/tests -v
+```
+
+O servidor local abre em http://127.0.0.1:8765 e não pede código da equipe. Mais detalhes em [pyhtml-beta/README.md](pyhtml-beta/README.md).
 
 ## 📋 Licença
 

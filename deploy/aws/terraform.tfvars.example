@@ -1,0 +1,3 @@
+aws_region = "us-east-1"
+# Substitua pelos IPs públicos de quem vai acessar a demo.
+allowed_cidrs = ["192.0.2.44/32", "2001:db8::44/128"]
